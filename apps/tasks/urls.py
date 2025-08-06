@@ -8,5 +8,5 @@ router.register(r'', TaskDetailsView)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path("list-details/", TaskListDetailsView.as_view(), name='task_list_details'),
+    path("list/", TaskListDetailsView.as_view(), name='task_list_details'),
 ]

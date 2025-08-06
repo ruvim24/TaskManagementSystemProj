@@ -9,7 +9,8 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
 
 from .filters import TaskFilter
 from .models import Task, StatusEnum, Comment
-from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer)
+from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer,
+                          TasksSerializer)
 
 
 # Create your views here.
@@ -24,7 +25,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
         serializer = self.get_serializer(task, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         task = serializer.save()
-        Task.user_assigned_to_task_email(task)
+        task.user_assigned_to_task_email()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['put'], serializer_class=NotImplemented)
@@ -32,7 +33,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
         task = self.get_object()
         task.status = StatusEnum.COMPLETED
         task.save()
-        Task.task_completed_email(task)
+        task.task_completed_email()
         return Response({'message': f"Task: f{task.title} completed succesefully"}, status=HTTP_200_OK)
 
     @action(detail=True, methods=['post'], serializer_class=AddCommentToTaskSerializer)
@@ -42,7 +43,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         new_comment = Comment(content=serializer.data['comment'], task=task)
         new_comment.save()
-        Task.task_commented_email(task, new_comment.content)
+        task.task_commented_email(new_comment.content)
         return Response({'comment_id': f"{new_comment.id}"}, status=HTTP_201_CREATED)
 
     @action(detail=True, methods=['get'], serializer_class=CommentSerializer)
@@ -54,7 +55,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
 
 
 class TaskListDetailsView(ListAPIView):
-    serializer_class = TaskDetailsSerializer
+    serializer_class = TasksSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = TaskFilter
 
