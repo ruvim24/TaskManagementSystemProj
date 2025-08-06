@@ -1,7 +1,7 @@
 ﻿from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from apps.tasks.models import Task, Comment
+from apps.tasks.models import Task, Comment, TimeLog
 from apps.users.serializers import UserSerializer
 
 
@@ -32,3 +32,15 @@ class AssignUserSerializer(serializers.Serializer):
 
 class AddCommentToTaskSerializer(serializers.Serializer):
     comment = serializers.CharField(max_length=250)
+
+class TimeLogSerializer(serializers.ModelSerializer):
+    start_time = serializers.DateTimeField(required=False, format="%Y-%m-%d %H:%M")
+    end_time = serializers.DateTimeField(required=False, format="%Y-%m-%d %H:%M")
+    duration = serializers.IntegerField(required=True, min_value=0)
+    class Meta:
+        model = TimeLog
+        fields = ('id', 'start_time', 'end_time', 'duration')
+
+class TaskDurationSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=255)
+    task_duration = serializers.IntegerField(min_value=0)

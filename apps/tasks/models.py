@@ -57,11 +57,17 @@ class Task(models.Model):
             fail_silently=False,
         )
 
-
-def __str__(self):
-    return self.title
+    def __str__(self):
+        return self.title
 
 
 class Comment(models.Model):
     content = models.TextField(max_length=250)
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments')
+
+
+class TimeLog(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='time_logs')
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    duration = models.IntegerField(null=True, blank=True)
