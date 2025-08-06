@@ -1,4 +1,5 @@
-﻿from rest_framework import serializers
+﻿from django.contrib.auth.models import User
+from rest_framework import serializers
 
 from apps.tasks.models import Task, Comment
 from apps.users.serializers import UserSerializer
@@ -26,7 +27,7 @@ class TasksSerializer(serializers.ModelSerializer):
 
 
 class AssignUserSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField()
+    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source='user')
 
 
 class AddCommentToTaskSerializer(serializers.Serializer):
