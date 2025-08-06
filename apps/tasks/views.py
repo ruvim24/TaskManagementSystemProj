@@ -9,16 +9,14 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
 
 from .filters import TaskFilter
 from .models import Task, StatusEnum, Comment
-from .serializers import TaskDetailsSerializer, TasksSerializer, AssignUserSerializer, AddCommentToTaskSerializer, \
-    CommentSerializer
+from .serializers import (TaskDetailsSerializer, TasksSerializer,
+                          AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer)
 
 
 # Create your views here.
 
 
 class TaskDetailsView(GenericAPIView):
-    # permission_classes = (IsAuthenticated,)
-    # authentication_classes = ()
     serializer_class = TaskDetailsSerializer
 
     def get(self, request: Request, pk: int) -> Response:
@@ -64,7 +62,7 @@ class AssignUserToTask(UpdateAPIView):
 
         task.user = user
         task.save()
-        user_assigned_to_task_email(user, task)
+        user_assigned_to_task_email(task)
         return (Response({'message': f"User: f{user.username} assigned succesefully to task: f{task.title}"},
                          status=HTTP_200_OK))
 
