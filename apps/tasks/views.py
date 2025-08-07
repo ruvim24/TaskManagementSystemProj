@@ -1,9 +1,11 @@
 from datetime import datetime
+
+from django.core.exceptions import BadRequest
 from django.db.models import Sum
 from django.utils import timezone
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404, ListAPIView, GenericAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -12,7 +14,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
 from .filters import TaskFilter
 from .models import Task, StatusEnum, Comment, TimeLog
 from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer,
-                          TasksSerializer, TimeLogSerializer, TaskDurationSerializer)
+                          TasksSerializer, TimeLogSerializer, TaskDurationSerializer, LastMonthDurationSerializer)
 
 
 # Create your views here.
@@ -20,6 +22,8 @@ from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommen
 class TaskDetailsView(viewsets.ModelViewSet):
     serializer_class = TaskDetailsSerializer
     queryset = Task.objects.all()
+
+    get_serializer_class = lambda self: self.serializer_class
 
     @action(detail=True, methods=['put'], serializer_class=AssignUserSerializer, url_path='assign-user')
     def assign_user(self, request, *args, **kwargs):
@@ -59,9 +63,14 @@ class TaskDetailsView(viewsets.ModelViewSet):
     def start_timer(self, request, pk=None):
         task = self.get_object()
 
-        is_time_started = task.time_logs.filter(start_time__isnull=False, end_time__isnull=True)
-        if is_time_started:
-            return Response({'message': 'Timer already started'}, status=HTTP_200_OK)
+        is_timer_started = (
+            task.time_logs.filter(
+                start_time__isnull=False,
+                end_time__isnull=True)
+            .exists())
+
+        if is_timer_started:
+            raise ValidationError('Timer already started')
 
         new_time_log = TimeLog(task=self.get_object(), start_time=datetime.now())
         new_time_log.save()
@@ -80,7 +89,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
             .first())
 
         if started_timer is None:
-            return Response({'message': 'Dont have a timer started'}, status=HTTP_200_OK)
+            raise ValidationError('Timer not started')
 
         duration = started_timer.start_time - timezone.now()
 
@@ -124,6 +133,8 @@ class TaskDetailsView(viewsets.ModelViewSet):
 
 
 class LastMontLoggedTimeDurationView(GenericAPIView):
+    serializer_class = LastMonthDurationSerializer
+
     def get(self, request: Request) -> Response:
         user_id = request.user.id
         time_logs = TimeLog.objects.filter(
@@ -141,14 +152,18 @@ class LastMontLoggedTimeDurationView(GenericAPIView):
 
 
 class TasksListDurationView(GenericAPIView):
+    serializer_class = TaskDurationSerializer
+
     def get(self, request: Request) -> Response:
         tasks = Task.objects.all().filter(time_logs__duration__isnull=False).annotate(
             task_duration=Sum('time_logs__duration'))
 
-        return Response(TaskDurationSerializer(tasks, many=True).data, status=HTTP_200_OK)
+        return Response(self.get_serializer(tasks, many=True).data, status=HTTP_200_OK)
 
 
 class TopTasksLastMonthView(GenericAPIView):
+    serializer_class = TaskDurationSerializer
+
     def get(self, request: Request) -> Response:
         top_tasks = (Task.objects
                      .filter(time_logs__duration__isnull=False,
@@ -156,13 +171,18 @@ class TopTasksLastMonthView(GenericAPIView):
                      .annotate(task_duration=Sum('time_logs__duration'))
                      .order_by('-task_duration')[:20])
 
-        return Response(TaskDurationSerializer(top_tasks, many=True).data, status=200)
+        return Response(self.get_serializer(top_tasks, many=True).data, status=200)
 
 
 class TaskListDetailsView(ListAPIView):
     serializer_class = TasksSerializer
-    filter_backends = [DjangoFilterBackend]
     filterset_class = TaskFilter
+    search_fields = ['title', 'description']
+    ordering = ('-id',)
+    ordering_fields = ('id', 'title', 'description', 'status', 'created_at')
+
+    def get_serializer_class(self):
+        return self.serializer_class
 
     def get_queryset(self):
         return Task.objects.all()
