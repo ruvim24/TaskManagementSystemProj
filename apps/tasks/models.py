@@ -23,6 +23,8 @@ class Task(models.Model):
 
     def task_completed_email(self):
         user_to_notify = self.user
+        if user_to_notify is None or user_to_notify.email is None:
+            return
         user_email = user_to_notify.email
 
         send_mail(
@@ -35,6 +37,8 @@ class Task(models.Model):
 
     def task_commented_email(self, comment):
         user_to_notify = self.user
+        if user_to_notify is None or user_to_notify.email is None:
+            return
         user_email = user_to_notify.email
 
         send_mail(
@@ -47,6 +51,8 @@ class Task(models.Model):
 
     def user_assigned_to_task_email(self):
         user_to_notify = self.user
+        if user_to_notify is None or user_to_notify.email is None:
+            return
         user_email = user_to_notify.email
 
         send_mail(
