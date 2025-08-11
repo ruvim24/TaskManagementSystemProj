@@ -2,6 +2,7 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.test import TestCase
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -25,27 +26,29 @@ class TaskTests(TestCase):
         # assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    # def test_task_list(self):
-    #     # arrange
-    #     client = APIClient()
-    #     tasks_to_create = []
-    #     for i in range(10):
-    #         tasks_to_create.append(Task(title=f"test title {i}", description=f"test description {i}", status="open"))
-    #     Task.objects.bulk_create(tasks_to_create)
-    #
-    #     # act
-    #     response = client.get('/api/tasks/?no_page')
-    #
-    #     # assert
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(len(response.data), 10)
+    def test_task_list(self):
+        # arrange
+        client = APIClient()
+        tasks_to_create = []
+        for i in range(10):
+            tasks_to_create.append(Task(title=f"test title {i}", description=f"test description {i}", status="open"))
+        Task.objects.bulk_create(tasks_to_create)
+
+        # act
+        url = reverse('tasks-list')
+        response = client.get(url)
+
+        # assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 10)
 
     def test_task_create(self):
         # arrange
         client = APIClient()
-        response = client.post('/api/tasks/',
-                               {"title": "test title", "description": "test description", "status": "open"},
-                               format='json')
+
+        # url = reverse('tasks-create')
+        data = {"title": "test title", "description": "test description", "status": "open"}
+        response = client.post('/api/tasks/', data=data, format='json')
 
         # act
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -63,6 +66,7 @@ class TaskTests(TestCase):
         update_data = {"title": "test title", "description": "test description", "status": "completed"}
 
         # act
+        # url = reverse('tasks-update', kwargs={'pk': task.id})
         response = client.put(f'/api/tasks/{task.id}/', update_data, format='json')
 
         # assert
@@ -78,6 +82,8 @@ class TaskTests(TestCase):
         task.save()
 
         # act
+        # url = reverse('tasks-destroy', kwargs={'pk': task.id})
+
         response = client.delete(f'/api/tasks/{task.id}/')
 
         # assert
@@ -90,33 +96,32 @@ class TaskTests(TestCase):
         task = Task.objects.create(title="test title", description="test description", status="open")
 
         # act
+        # url = reverse('tasks-complete', kwargs={'task_id': task.id})
         response = client.put(f'/api/tasks/{task.id}/complete/')
 
         # assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Task.objects.get(id=task.id).status, "completed")
 
-    # def test_task_create_comment(self):
-    #     #arrange
-    #     client = APIClient()
-    #     task = Task.objects.create(title="test title", description="test description", status="open")
-    #     task.save()
-    #
-    #     #act
-    #     response = client.post(f'api/tasks/{task.id}/comment/', {"comment": "test comment"}, format='json')
-    #     print(response.content.decode('utf-8'))
-    #     print(response.status_code)
-    #
-    #     #assert
-    #     self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-    #     self.assertEqual(
-    #         Comment.objects.get(id=response['comment_id']).content,
-    #         "test comment"
-    #     )
-    #     self.assertEqual(
-    #         Comment.objects.get(id=response['comment_id']).task.id,
-    #         Task.objects.get(id=task.id).id
-    #     )
+    def test_task_create_comment(self):
+        # arrange
+        client = APIClient()
+        task = Task.objects.create(title="test title", description="test description", status="open")
+        task.save()
+
+        # act
+        response = client.post(f'/api/tasks/{task.id}/comment/', {"comment": "test comment"}, format='json')
+
+        # assert
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            Comment.objects.get(id=response.data['comment_id']).content,
+            "test comment"
+        )
+        self.assertEqual(
+            Comment.objects.get(id=response.data['comment_id']).task.id,
+            Task.objects.get(id=task.id).id
+        )
 
     def test_task_get_comments(self):
         # arrange
@@ -185,23 +190,23 @@ class TaskTests(TestCase):
         # assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    # def test_task_get_time_logs_should_be_successfully(self):
-    #     # arrange
-    #     client = APIClient()
-    #     task = Task.objects.create(title="test title", description="test description", status="open")
-    #     task.save()
-    #     time_logs_to_create = []
-    #     for i in range(10):
-    #         time_logs_to_create.append(TimeLog(start_time=datetime.now(), end_time=datetime.now(), task=task))
-    #
-    #     TimeLog.objects.bulk_create(time_logs_to_create)
-    #
-    #     # act
-    #     response = client.get(f'api/tasks/{task.id}/time-logs/')
-    #
-    #     # assert
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(len(response.data), 10)
+    def test_task_get_time_logs_should_be_successfully(self):
+        # arrange
+        client = APIClient()
+        task = Task.objects.create(title="test title", description="test description", status="open")
+        task.save()
+        time_logs_to_create = []
+        for i in range(10):
+            time_logs_to_create.append(TimeLog(start_time=datetime.now(), end_time=datetime.now(), task=task))
+
+        TimeLog.objects.bulk_create(time_logs_to_create)
+
+        # act
+        response = client.get(f'/api/tasks/{task.id}/time-logs/')
+
+        # assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 10)
 
     def test_log_time_should_be_successfully(self):
         client = APIClient()
@@ -251,9 +256,115 @@ class TaskTests(TestCase):
         )
 
         # act
-        response = client.get('/api/tasks/last-month-time-logged-duration/')
-        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!' + response.content.decode('utf-8'))
+        url = reverse('last_month_logged_time_duration')
+        response = client.get(url)
 
         # assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['Total logged time in hours for last month'], 1)
+
+    def test_tasks_list_duration(self):
+        # arrange
+        client = APIClient()
+        task = Task.objects.create(title="test title", description="test description", status="open")
+        task.save()
+
+        time_logs = []
+        for i in range(2):
+            time_logs.append(TimeLog(start_time=datetime.now(), end_time=datetime.now(), task=task, duration=60))
+
+        TimeLog.objects.bulk_create(time_logs)
+
+        task2 = Task.objects.create(title="test title2", description="test description2", status="open")
+        task2.save()
+        time_logs2 = []
+        for i in range(2):
+            time_logs2.append(TimeLog(start_time=datetime.now(), end_time=datetime.now(), task=task2, duration=120))
+        TimeLog.objects.bulk_create(time_logs2)
+
+        # act
+        response = client.get('/api/tasks/duration/')
+
+        # assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]['task_duration'], 120)
+        self.assertEqual(response.data[1]['task_duration'], 240)
+
+    def test_top_tasks_last_month(self):
+        # arrange
+        client = APIClient()
+        task = Task.objects.create(title="test title", description="test description", status="open")
+        task.save()
+
+        time_log = TimeLog.objects.create(start_time=datetime.now(), end_time=datetime.now(), task=task,
+                                          duration=60)
+        time_log.save()
+
+        task2 = Task.objects.create(title="test title2", description="test description2", status="open")
+        task2.save()
+        two_months_ago = datetime.now() - relativedelta(months=2)
+
+        time_log2 = TimeLog.objects.create(start_time=two_months_ago, end_time=two_months_ago, task=task2,
+                                           duration=60)
+        time_log2.save()
+
+        # act
+        response = client.get('/api/tasks/top-tasks/')
+
+        # assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    def test_tasks_list_details(self):
+        # arrange
+        client = APIClient()
+
+        tasks_to_create = []
+        for i in range(10):
+            tasks_to_create.append(
+                Task(title=f"test title {i}", description=f"test description {i}", status="open"))
+
+        Task.objects.bulk_create(tasks_to_create)
+
+        # act
+        response = client.get('/api/tasks/list/')
+
+        # assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), len(tasks_to_create))
+
+    def test_tasks_list_details_filter_by_status(self):
+        # arrange
+        client = APIClient()
+        tasks_to_create = []
+        for i in range(2):
+            tasks_to_create.append(
+                Task(title=f"test title {i}", description=f"test description {i}", status="open"))
+        tasks_to_create[1].status = "completed"
+        Task.objects.bulk_create(tasks_to_create)
+
+        # act
+        response = client.get('/api/tasks/list/', {'status': 'completed'})
+
+        # assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 1)
+
+    def test_tasks_list_details_search(self):
+        # arrange
+        client = APIClient()
+        tasks_to_create = []
+        for i in range(2):
+            tasks_to_create.append(
+                Task(title=f"test title {i}", description=f"test description {i}", status="open"))
+        tasks_to_create[1].title = "search title"
+        Task.objects.bulk_create(tasks_to_create)
+
+        # act
+        response = client.get('/api/tasks/list/', {'search': 'search'})
+
+        # assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['title'], "search title")

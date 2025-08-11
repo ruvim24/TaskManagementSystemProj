@@ -5,7 +5,7 @@ from .views import (TaskDetailsView, TaskListDetailsView, LastMontLoggedTimeDura
                     TopTasksLastMonthView)
 
 router = DefaultRouter()
-router.register(r'', TaskDetailsView)
+router.register(r'', TaskDetailsView, basename='tasks')
 
 urlpatterns = [
     path("list/", TaskListDetailsView.as_view(), name='task_list_details'),
