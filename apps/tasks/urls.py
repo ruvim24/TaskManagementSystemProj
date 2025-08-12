@@ -12,7 +12,7 @@ urlpatterns = [
     path('last-month-time-logged-duration', LastMontLoggedTimeDurationView.as_view(),
          name='last_month_logged_time_duration'),
     path('duration/', TasksListDurationView.as_view(), name='tasks_list_duration'),
-    path('top-tasks/', TopTasksLastMonthView.as_view(), name='top_tasks_last_month'),
+    path('top-tasks/', TopTasksLastMonthView, name='top_tasks_last_month'),
     path('', include(router.urls)),
 
 ]

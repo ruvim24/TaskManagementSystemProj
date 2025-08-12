@@ -16,6 +16,7 @@ from .models import Task, StatusEnum, Comment, TimeLog
 from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer,
                           TasksSerializer, TimeLogSerializer, TaskDurationSerializer, LastMonthDurationSerializer)
 from dateutil.relativedelta import relativedelta
+from django.views.decorators.cache import cache_page
 
 
 # Create your views here.
@@ -162,6 +163,7 @@ class TasksListDurationView(GenericAPIView):
         return Response(self.get_serializer(tasks, many=True).data, status=HTTP_200_OK)
 
 
+@cache_page(60)
 class TopTasksLastMonthView(GenericAPIView):
     serializer_class = TaskDurationSerializer
 
