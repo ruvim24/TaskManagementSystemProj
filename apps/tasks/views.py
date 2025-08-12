@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.core.exceptions import BadRequest
 from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import viewsets, status
