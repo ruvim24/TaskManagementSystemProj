@@ -162,7 +162,6 @@ class TasksListDurationView(GenericAPIView):
         return Response(self.get_serializer(tasks, many=True).data, status=HTTP_200_OK)
 
 
-@cache_page(60)
 class TopTasksLastMonthView(GenericAPIView):
     serializer_class = TaskDurationSerializer
 
