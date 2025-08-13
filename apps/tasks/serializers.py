@@ -1,7 +1,7 @@
 ﻿from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from apps.tasks.models import Task, Comment, TimeLog
+from apps.tasks.models import Task, Comment, TimeLog, Attachment
 from apps.users.serializers import UserSerializer
 
 
@@ -51,3 +51,9 @@ class TaskDurationSerializer(serializers.Serializer):
 
 class LastMonthDurationSerializer(serializers.Serializer):
     total_hours = serializers.FloatField()
+
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Attachment
+        fields = ('id', 'media_item')

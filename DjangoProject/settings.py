@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'apps.tasks',
     'apps.users',
     'django_filters',
-    'rest_framework'
+    'rest_framework',
+    'django_minio_backend',
+
 ]
 
 MIDDLEWARE = [
@@ -133,6 +135,33 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'A simple API for managing tasks and users',
     'VERSION': '1.0.0',
 }
+
+# minio settings
+STORAGES = {
+    "default": {
+        "BACKEND": "django_minio_backend.models.MinioBackend",
+        "OPTIONS": {
+            "bucket_name": "my-media-bucket",
+            "auto_create_bucket": True,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django_minio_backend.models.MinioBackendStatic",
+        # "OPTIONS": {
+        #     "bucket_name": "my-static-bucket",
+        #     "auto_create_bucket": True,
+        # },
+    },
+}
+
+MINIO_CONSISTENCY_CHECK_ON_START = False
+
+MINIO_ENDPOINT = 'minio:9000'
+MINIO_ACCESS_KEY = 'minio_user'
+MINIO_SECRET_KEY = 'minio_password'
+MINIO_USE_HTTPS = False
+
+MINIO_PUBLIC_BUCKETS = ['django-backend-dev-public']
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.db.models import Sum
 from django.utils import timezone
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, parsers
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404, ListAPIView, GenericAPIView
@@ -11,15 +11,23 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
 
 from .filters import TaskFilter
-from .models import Task, StatusEnum, Comment, TimeLog
+from .models import Task, StatusEnum, Comment, TimeLog, Attachment
 from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer,
-                          TasksSerializer, TimeLogSerializer, TaskDurationSerializer, LastMonthDurationSerializer)
+                          TasksSerializer, TimeLogSerializer, TaskDurationSerializer, LastMonthDurationSerializer,
+                          AttachmentSerializer)
 from dateutil.relativedelta import relativedelta
 from django.views.decorators.cache import cache_page
 
 
 # Create your views here.
+# test
+class AttachmentView(viewsets.ModelViewSet):
+    serializer_class = AttachmentSerializer
+    queryset = Attachment.objects.all()
+    # parser_classes = (parsers.MultiPartParser, parsers.FormParser, parsers.DjangoMultiPartParser)
 
+
+# --------------------
 class TaskDetailsView(viewsets.ModelViewSet):
     serializer_class = TaskDetailsSerializer
     queryset = Task.objects.all()
