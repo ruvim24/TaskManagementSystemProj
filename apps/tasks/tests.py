@@ -6,6 +6,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.tasks.factories import TaskFactory, CommentFactory, TimeLogFactory
 from apps.tasks.models import Task, Comment, TimeLog
 
 
@@ -17,8 +18,7 @@ class TaskTests(TestCase):
     def test_task_get(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
+        task = TaskFactory.create()
 
         # act
         response = client.get(f'/api/tasks/{task.id}/')
@@ -29,10 +29,8 @@ class TaskTests(TestCase):
     def test_task_list(self):
         # arrange
         client = APIClient()
-        tasks_to_create = []
-        for i in range(10):
-            tasks_to_create.append(Task(title=f"test title {i}", description=f"test description {i}", status="open"))
-        Task.objects.bulk_create(tasks_to_create)
+
+        TaskFactory.create_batch(10)
 
         # act
         url = reverse('tasks-list')
@@ -46,7 +44,6 @@ class TaskTests(TestCase):
         # arrange
         client = APIClient()
 
-        # url = reverse('tasks-create')
         data = {"title": "test title", "description": "test description", "status": "open"}
         response = client.post('/api/tasks/', data=data, format='json')
 
@@ -61,12 +58,10 @@ class TaskTests(TestCase):
     def test_task_update(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="some title", description="some description", status="open")
-        task.save()
+        task = TaskFactory.create()
         update_data = {"title": "test title", "description": "test description", "status": "completed"}
 
         # act
-        # url = reverse('tasks-update', kwargs={'pk': task.id})
         response = client.put(f'/api/tasks/{task.id}/', update_data, format='json')
 
         # assert
@@ -78,12 +73,9 @@ class TaskTests(TestCase):
     def test_task_delete(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
+        task = TaskFactory.create()
 
         # act
-        # url = reverse('tasks-destroy', kwargs={'pk': task.id})
-
         response = client.delete(f'/api/tasks/{task.id}/')
 
         # assert
@@ -93,10 +85,9 @@ class TaskTests(TestCase):
     def test_task_complete(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
+        task = TaskFactory.create()
 
         # act
-        # url = reverse('tasks-complete', kwargs={'task_id': task.id})
         response = client.put(f'/api/tasks/{task.id}/complete/')
 
         # assert
@@ -106,8 +97,7 @@ class TaskTests(TestCase):
     def test_task_create_comment(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
+        task = TaskFactory.create()
 
         # act
         response = client.post(f'/api/tasks/{task.id}/comment/', {"comment": "test comment"}, format='json')
@@ -126,12 +116,8 @@ class TaskTests(TestCase):
     def test_task_get_comments(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
-        comments_to_create = []
-        for i in range(10):
-            comments_to_create.append(Comment(content=f"test comment {i}", task=task))
-        Comment.objects.bulk_create(comments_to_create)
+        task = TaskFactory.create()
+        CommentFactory.create_batch(10, task=task)
 
         # act
         response = client.get(f'/api/tasks/{task.id}/comments/')
@@ -143,8 +129,7 @@ class TaskTests(TestCase):
     def test_start_timer_should_be_successfully(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
+        task = TaskFactory.create()
 
         # act
         response = client.post(f'/api/tasks/{task.id}/start-timer/')
@@ -153,11 +138,10 @@ class TaskTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_start_timer_should_fail(self):
-        # arange
+        # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="completed")
-        task.save()
-        TimeLog.objects.create(task=task, start_time=datetime.now())
+        task = TaskFactory.create()
+        TimeLogFactory.create(task=task, start_time=datetime.now(), end_time=None)
 
         # act
         response = client.post(f'/api/tasks/{task.id}/start-timer/')
@@ -168,8 +152,7 @@ class TaskTests(TestCase):
     def test_stop_timer_should_fail(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
+        task = TaskFactory.create()
 
         # act
         response = client.put(f'/api/tasks/{task.id}/stop-timer/')
@@ -180,9 +163,12 @@ class TaskTests(TestCase):
     def test_stop_timer_should_be_successfully(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="completed")
-        task.save()
-        TimeLog.objects.create(task=task, start_time=datetime.now())
+        task = TaskFactory.create()
+        TimeLogFactory.create(
+            task=task,
+            start_time=datetime.now(),
+            end_time=None,
+            duration=None)
 
         # act
         response = client.put(f'/api/tasks/{task.id}/stop-timer/')
@@ -193,13 +179,9 @@ class TaskTests(TestCase):
     def test_task_get_time_logs_should_be_successfully(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
-        time_logs_to_create = []
-        for i in range(10):
-            time_logs_to_create.append(TimeLog(start_time=datetime.now(), end_time=datetime.now(), task=task))
+        task = TaskFactory.create()
 
-        TimeLog.objects.bulk_create(time_logs_to_create)
+        TimeLogFactory.create_batch(10, task=task)
 
         # act
         response = client.get(f'/api/tasks/{task.id}/time-logs/')
@@ -210,8 +192,7 @@ class TaskTests(TestCase):
 
     def test_log_time_should_be_successfully(self):
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
+        task = TaskFactory.create()
 
         request_data = {
             'start_time': '2025-07-22T10:30:00Z',
@@ -227,13 +208,8 @@ class TaskTests(TestCase):
 
     def test_logged_time_duration_should_be_successfully(self):
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
-
-        time_logs = []
-        for i in range(2):
-            time_logs.append(TimeLog(start_time=datetime.now(), end_time=datetime.now(), task=task, duration=60))
-        TimeLog.objects.bulk_create(time_logs)
+        task = TaskFactory.create()
+        TimeLogFactory.create_batch(2, task=task, duration=60)
 
         # act
         response = client.get(f'/api/tasks/{task.id}/logged-time-duration/')
@@ -245,11 +221,19 @@ class TaskTests(TestCase):
     def test_last_month_time_logged_duration(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
+        task = Task.objects.create(
+            title="test title",
+            description="test description",
+            status="open")
         task.save()
 
-        TimeLog.objects.create(start_time=datetime.now(), end_time=datetime.now(), task=task, duration=60)
-        TimeLog.objects.create(
+        TimeLogFactory.create(
+            start_time=datetime.now(),
+            end_time=datetime.now(),
+            task=task,
+            duration=60)
+
+        TimeLogFactory.create(
             start_time=datetime.now() - relativedelta(months=1),
             end_time=datetime.now(), task=task,
             duration=60
@@ -266,21 +250,12 @@ class TaskTests(TestCase):
     def test_tasks_list_duration(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
+        task = TaskFactory.create()
 
-        time_logs = []
-        for i in range(2):
-            time_logs.append(TimeLog(start_time=datetime.now(), end_time=datetime.now(), task=task, duration=60))
+        TimeLogFactory.create_batch(2, duration=60, task=task)
 
-        TimeLog.objects.bulk_create(time_logs)
-
-        task2 = Task.objects.create(title="test title2", description="test description2", status="open")
-        task2.save()
-        time_logs2 = []
-        for i in range(2):
-            time_logs2.append(TimeLog(start_time=datetime.now(), end_time=datetime.now(), task=task2, duration=120))
-        TimeLog.objects.bulk_create(time_logs2)
+        task2 = TaskFactory.create()
+        TimeLogFactory.create_batch(2, duration=120, task=task2)
 
         # act
         response = client.get('/api/tasks/duration/')
@@ -294,20 +269,21 @@ class TaskTests(TestCase):
     def test_top_tasks_last_month(self):
         # arrange
         client = APIClient()
-        task = Task.objects.create(title="test title", description="test description", status="open")
-        task.save()
+        task = TaskFactory.create()
 
-        time_log = TimeLog.objects.create(start_time=datetime.now(), end_time=datetime.now(), task=task,
-                                          duration=60)
-        time_log.save()
+        TimeLogFactory.create(
+            start_time=datetime.now(),
+            end_time=datetime.now(),
+            task=task,
+            duration=60)
 
-        task2 = Task.objects.create(title="test title2", description="test description2", status="open")
-        task2.save()
+        task2 = TaskFactory.create()
         two_months_ago = datetime.now() - relativedelta(months=2)
-
-        time_log2 = TimeLog.objects.create(start_time=two_months_ago, end_time=two_months_ago, task=task2,
-                                           duration=60)
-        time_log2.save()
+        TimeLogFactory.create(
+            start_time=two_months_ago,
+            end_time=two_months_ago,
+            task=task2,
+            duration=60)
 
         # act
         response = client.get('/api/tasks/top-tasks/')
@@ -320,29 +296,22 @@ class TaskTests(TestCase):
         # arrange
         client = APIClient()
 
-        tasks_to_create = []
-        for i in range(10):
-            tasks_to_create.append(
-                Task(title=f"test title {i}", description=f"test description {i}", status="open"))
-
-        Task.objects.bulk_create(tasks_to_create)
+        TaskFactory.create_batch(10)
 
         # act
         response = client.get('/api/tasks/list/')
 
         # assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), len(tasks_to_create))
+        self.assertEqual(len(response.data['results']), 10)
 
     def test_tasks_list_details_filter_by_status(self):
         # arrange
         client = APIClient()
-        tasks_to_create = []
-        for i in range(2):
-            tasks_to_create.append(
-                Task(title=f"test title {i}", description=f"test description {i}", status="open"))
-        tasks_to_create[1].status = "completed"
-        Task.objects.bulk_create(tasks_to_create)
+        tasks = TaskFactory.create_batch(2, status="open")
+
+        tasks[1].status = "completed"
+        tasks[1].save()
 
         # act
         response = client.get('/api/tasks/list/', {'status': 'completed'})
@@ -354,12 +323,10 @@ class TaskTests(TestCase):
     def test_tasks_list_details_search(self):
         # arrange
         client = APIClient()
-        tasks_to_create = []
-        for i in range(2):
-            tasks_to_create.append(
-                Task(title=f"test title {i}", description=f"test description {i}", status="open"))
-        tasks_to_create[1].title = "search title"
-        Task.objects.bulk_create(tasks_to_create)
+
+        tasks = TaskFactory.create_batch(2)
+        tasks[1].title = "search title"
+        tasks[1].save()
 
         # act
         response = client.get('/api/tasks/list/', {'search': 'search'})
