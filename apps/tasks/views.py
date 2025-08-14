@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pickle import FALSE
 
 from django.db.models import Sum
 from django.utils import timezone
@@ -10,6 +11,7 @@ from rest_framework.generics import get_object_or_404, ListAPIView, GenericAPIVi
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
+from rest_framework.views import APIView
 
 from DjangoProject.settings import MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
 from .filters import TaskFilter
@@ -173,27 +175,6 @@ class TaskDetailsView(viewsets.ModelViewSet):
 
         return Response(GetPreassignedUploadUrlSerializer(attachment).data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['put'], serializer_class=UploadCompletedSerializer, url_path='file-upload-completed')
-    def file_upload_completed(self, request: Request, pk: int):
-        task = self.get_object()
-        if task is None:
-            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.get_serializer(data=request.data)
-
-        if not serializer.is_valid():
-            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-
-        attachment = Attachment.objects.get(pk=serializer.data['attachment_id'])
-        if attachment.status == AttachmentStatus.IN_PENDING:
-            return Response({'error': f'Attachment not is status: {AttachmentStatus.IN_PENDING}'},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        attachment.status = AttachmentStatus.UPLOADED
-        attachment.url = serializer.data['url']
-        attachment.save()
-
-        return Response(status=HTTP_200_OK)
-
     @action(detail=True, methods=['get'], serializer_class=AttachmentSerializer, url_path='attachments')
     def task_attachments_list(self, request: Request, pk: int):
         task = self.get_object()
@@ -256,3 +237,26 @@ class TaskListDetailsView(ListAPIView):
 
     def get_queryset(self):
         return Task.objects.all()
+
+
+class UploadFileView(APIView):
+    def post(self, request: Request):
+        try:
+            minio_event = request.data['Records'][0]
+            file_key = minio_event['s3']['object']['key']
+            bucket_name = minio_event['s3']['bucket']['name']
+        except (KeyError, IndexError):
+            return Response({'error': 'Invalid MinIO event payload'}, status=status.HTTP_400_BAD_REQUEST)
+
+        attachment = Attachment.objects.get(file_name=file_key)
+        if not attachment:
+            print(f"Attachment with: {file_key} not found")
+
+        minio_base_url = f"http://{MINIO_ENDPOINT}"
+        file_url = f"{minio_base_url}/{bucket_name}/{file_key}"
+        attachment.url = file_url
+        attachment.status = AttachmentStatus.UPLOADED
+        attachment.save()
+        print("File successfully uploaded")
+
+        return Response(status=HTTP_200_OK)

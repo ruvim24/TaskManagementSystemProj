@@ -2,24 +2,24 @@
 version: '3.8'
 
 services:
-#  app:
-#    build: .
-#    container_name: app
-#    ports:
-#      - "8000:8000"
-#    networks:
-#      - my-net
-#    depends_on:
-#      db:
-#        condition: service_started
-#      redis:
-#        condition: service_started
-#      minio:
-#        condition: service_healthy
-##    environment:
-##      MINIO_ENDPOINT: "http://minio:9000"
-##      MINIO_ACCESS_KEY: "minio_user"
-##      MINIO_SECRET_KEY: "minio_password"
+  #  app:
+  #    build: .
+  #    container_name: app
+  #    ports:
+  #      - "8000:8000"
+  #    networks:
+  #      - my-net
+  #    depends_on:
+  #      db:
+  #        condition: service_started
+  #      redis:
+  #        condition: service_started
+  #      minio:
+  #        condition: service_healthy
+  ##    environment:
+  ##      MINIO_ENDPOINT: "http://minio:9000"
+  ##      MINIO_ACCESS_KEY: "minio_user"
+  ##      MINIO_SECRET_KEY: "minio_password"
 
   db:
     image: postgres:14
@@ -65,7 +65,9 @@ services:
     environment:
       MINIO_ROOT_USER: minio_user
       MINIO_ROOT_PASSWORD: minio_password
-    command: server /data --console-address ":9001"
+      MINIO_NOTIFY_WEBHOOK_ENABLE_1: "on"
+      MINIO_NOTIFY_WEBHOOK_ENDPOINT_1: "http://host.docker.internal:8000/api/tasks/upload-webhook/"
+    command: minio server /data --console-address ":9001"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
