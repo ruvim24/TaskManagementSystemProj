@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.db.models import Sum
 from django.utils import timezone
-from rest_framework import viewsets, status, parsers
+from minio import Minio
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404, ListAPIView, GenericAPIView
@@ -10,24 +11,16 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
 
+from DjangoProject.settings import MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
 from .filters import TaskFilter
-from .models import Task, StatusEnum, Comment, TimeLog, Attachment
+from .models import Task, StatusEnum, Comment, TimeLog, Attachment, AttachmentStatus
 from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer,
                           TasksSerializer, TimeLogSerializer, TaskDurationSerializer, LastMonthDurationSerializer,
+                          GetPreassignedUploadUrlSerializer, UploadCompletedSerializer,
                           AttachmentSerializer)
-from dateutil.relativedelta import relativedelta
-from django.views.decorators.cache import cache_page
 
 
 # Create your views here.
-# test
-class AttachmentView(viewsets.ModelViewSet):
-    serializer_class = AttachmentSerializer
-    queryset = Attachment.objects.all()
-    # parser_classes = (parsers.MultiPartParser, parsers.FormParser, parsers.DjangoMultiPartParser)
-
-
-# --------------------
 class TaskDetailsView(viewsets.ModelViewSet):
     serializer_class = TaskDetailsSerializer
     queryset = Task.objects.all()
@@ -139,6 +132,74 @@ class TaskDetailsView(viewsets.ModelViewSet):
         logs_duration_in_hours = round(logs_duration / 60, 1)
 
         return Response({'Total logged time in hours': logs_duration_in_hours}, status=HTTP_200_OK)
+
+    @action(
+        methods=['put'],
+        detail=True,
+        serializer_class=GetPreassignedUploadUrlSerializer,
+        url_path='get-preassigned-url')
+    def get_preassigned_url(self, request: Request, pk=None):
+
+        task = self.get_object()
+        if task is None:
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        client = Minio(
+            MINIO_ENDPOINT,
+            access_key=MINIO_ACCESS_KEY,
+            secret_key=MINIO_SECRET_KEY,
+            secure=False)
+
+        bucket_name = "files"
+        if not client.bucket_exists(bucket_name):
+            client.make_bucket(bucket_name)
+
+        file_name = request.data['file_name']
+        try:
+            url = client.get_presigned_url(
+                bucket_name=bucket_name,
+                object_name=file_name,
+                expires=timedelta(seconds=300),
+                method="PUT")
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        attachment = Attachment.objects.create(pre_assigned_url=url, task=task, file_name=file_name)
+        attachment.save()
+
+        return Response(GetPreassignedUploadUrlSerializer(attachment).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['put'], serializer_class=UploadCompletedSerializer, url_path='file-upload-completed')
+    def file_upload_completed(self, request: Request, pk: int):
+        task = self.get_object()
+        if task is None:
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+        attachment = Attachment.objects.get(pk=serializer.data['attachment_id'])
+        if attachment.status == AttachmentStatus.IN_PENDING:
+            return Response({'error': f'Attachment not is status: {AttachmentStatus.IN_PENDING}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        attachment.status = AttachmentStatus.UPLOADED
+        attachment.url = serializer.data['url']
+        attachment.save()
+
+        return Response(status=HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], serializer_class=AttachmentSerializer, url_path='attachments')
+    def task_attachments_list(self, request: Request, pk: int):
+        task = self.get_object()
+        attachments = task.attachments
+        serializer = self.get_serializer(attachments, many=True)
+        return Response(serializer.data, status=HTTP_200_OK)
 
 
 class LastMontLoggedTimeDurationView(GenericAPIView):

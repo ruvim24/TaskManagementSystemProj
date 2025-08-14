@@ -86,8 +86,8 @@ DATABASES = {
         'NAME': 'django-db',
         'USER': 'django-user',
         'PASSWORD': 'passw0rd',
-        'HOST': 'db',
-        'PORT': '5432',
+        'HOST': 'localhost',  # db
+        'PORT': '5433',  # 5432
     }
 }
 
@@ -156,7 +156,7 @@ STORAGES = {
 
 MINIO_CONSISTENCY_CHECK_ON_START = False
 
-MINIO_ENDPOINT = 'minio:9000'
+MINIO_ENDPOINT = 'localhost:9000'  # minio:9000
 MINIO_ACCESS_KEY = 'minio_user'
 MINIO_SECRET_KEY = 'minio_password'
 MINIO_USE_HTTPS = False

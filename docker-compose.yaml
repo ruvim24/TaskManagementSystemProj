@@ -2,24 +2,24 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
-    container_name: tasma-app
-    ports:
-      - "8000:8000"
-    networks:
-      - tasma-network
-    depends_on:
-      db:
-        condition: service_started
-      redis:
-        condition: service_started
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ENDPOINT: "http://minio:9000"
-      MINIO_ACCESS_KEY: "minio_user"
-      MINIO_SECRET_KEY: "minio_password"
+#  app:
+#    build: .
+#    container_name: app
+#    ports:
+#      - "8000:8000"
+#    networks:
+#      - my-net
+#    depends_on:
+#      db:
+#        condition: service_started
+#      redis:
+#        condition: service_started
+#      minio:
+#        condition: service_healthy
+##    environment:
+##      MINIO_ENDPOINT: "http://minio:9000"
+##      MINIO_ACCESS_KEY: "minio_user"
+##      MINIO_SECRET_KEY: "minio_password"
 
   db:
     image: postgres:14
@@ -31,7 +31,7 @@ services:
     ports:
       - "5433:5432"
     networks:
-      - tasma-network
+      - my-net
 
   pghero:
     image: ankane/pghero
@@ -44,7 +44,7 @@ services:
       db:
         condition: service_started
     networks:
-      - tasma-network
+      - my-net
 
   redis:
     image: redis:latest
@@ -53,7 +53,7 @@ services:
       - "6379:6379"
 
     networks:
-      - tasma-network
+      - my-net
 
   minio:
     image: minio/minio:latest
@@ -72,10 +72,10 @@ services:
       timeout: 10s
       retries: 5
     networks:
-      - tasma-network
+      - my-net
 
 networks:
-  tasma-network:
+  my-net:
     external: false
 
 volumes:

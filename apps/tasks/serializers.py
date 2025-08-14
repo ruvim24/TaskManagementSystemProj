@@ -53,7 +53,30 @@ class LastMonthDurationSerializer(serializers.Serializer):
     total_hours = serializers.FloatField()
 
 
+class UploadAttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Attachment
+        fields = ['file_name']
+
+
+class GetPreassignedUploadUrlSerializer(serializers.ModelSerializer):
+    url = serializers.URLField(read_only=True)
+    id = serializers.IntegerField(read_only=True)
+    task_id = serializers.IntegerField(read_only=True)
+    status = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Attachment
+        fields = ['id', 'url', 'file_name', 'status', 'task_id']
+
+
+class UploadCompletedSerializer(serializers.Serializer):
+    # task_id = serializers.RelatedField(queryset=Task.objects.all())
+    attachment_id = serializers.PrimaryKeyRelatedField(queryset=Attachment.objects.all())
+    url = serializers.URLField(required=True)
+
+
 class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
-        fields = ('id', 'media_item')
+        fields = ('id', 'file_name', 'url')

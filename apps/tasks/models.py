@@ -14,6 +14,13 @@ class StatusEnum(models.TextChoices):
     ARCHIVED = 'archived'
 
 
+class AttachmentStatus(models.TextChoices):
+    IN_PENDING = "in_pending"
+    UPLOADED = "uploaded"
+    CANCELLED = "cancelled"
+    REMOVED = "removed"
+
+
 class Task(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -81,5 +88,9 @@ class TimeLog(models.Model):
 
 
 class Attachment(models.Model):
-    media_item = models.FileField(storage=MinioBackend(), upload_to=iso_date_prefix)
+    file_name = models.CharField(max_length=500, default="unknown_file_name")
+    pre_assigned_url = models.URLField(max_length=1000, default="")
+    url = models.URLField(max_length=1000, default="", null=True, blank=True)
+    status = models.CharField(choices=AttachmentStatus.choices, max_length=20,
+                              default=AttachmentStatus.IN_PENDING, db_index=True)
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='attachments')
