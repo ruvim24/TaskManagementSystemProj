@@ -65,7 +65,6 @@ class GetPreassignedUploadUrlSerializer(serializers.ModelSerializer):
 
 
 class UploadCompletedSerializer(serializers.Serializer):
-    # task_id = serializers.RelatedField(queryset=Task.objects.all())
     attachment_id = serializers.PrimaryKeyRelatedField(queryset=Attachment.objects.all())
     url = serializers.URLField(required=True)
 
