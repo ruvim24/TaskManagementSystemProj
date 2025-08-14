@@ -53,12 +53,6 @@ class LastMonthDurationSerializer(serializers.Serializer):
     total_hours = serializers.FloatField()
 
 
-class UploadAttachmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Attachment
-        fields = ['file_name']
-
-
 class GetPreassignedUploadUrlSerializer(serializers.ModelSerializer):
     url = serializers.URLField(read_only=True)
     id = serializers.IntegerField(read_only=True)
