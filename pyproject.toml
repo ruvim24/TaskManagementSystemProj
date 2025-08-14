@@ -3,15 +3,20 @@ name = "task-management-system"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Your Name", email = "you@example.com" }
 ]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "django",
+    "django~=4.2",
     "djangorestframework-simplejwt (>=5.5.1,<6.0.0)",
     "drf-spectacular (>=0.28.0,<0.29.0)",
-    "django-filter (>=25.1,<26.0)"
+    "coverage (>=7.10.3,<8.0.0)",
+    "django-coverage-plugin (>=3.1.1,<4.0.0)",
+    "psycopg2-binary (>=2.9.10,<3.0.0)",
+    "django-redis (>=6.0.0,<7.0.0)",
+    "django-filter (>=25.1,<26.0)",
+    "python-dateutil (>=2.9.0.post0,<3.0.0)"
 ]
 
 

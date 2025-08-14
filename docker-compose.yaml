@@ -1,0 +1,54 @@
+﻿version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    container_name: django-postgres
+    environment:
+      - POSTGRES_USER=django-user
+      - POSTGRES_PASSWORD=passw0rd
+      - POSTGRES_DB=django-db
+    ports:
+      - "5433:5432"
+    networks:
+      - mynet
+
+  pghero:
+    image: ankane/pghero
+    container_name: pghero
+    environment:
+      - DATABASE_URL=postgres://django-user:passw0rd@db:5432/django-db
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - mynet
+
+  redis:
+    image: redis:latest
+    container_name: redis-primary
+    command: redis-server --protected-mode no
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: redis-cli ping
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mynet
+
+  app:
+    build: .
+    container_name: tamsa-app
+    ports:
+      - "8000:8000"
+    networks:
+      - mynet
+    depends_on:
+      - db
+      - redis
+networks:
+  mynet:
+    external: true
