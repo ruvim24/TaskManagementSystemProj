@@ -1,7 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from pickle import FALSE
 
 from django.db.models import Sum
 from django.utils import timezone
+from minio import Minio
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -9,17 +11,18 @@ from rest_framework.generics import get_object_or_404, ListAPIView, GenericAPIVi
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
+from rest_framework.views import APIView
 
+from DjangoProject.settings import MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
 from .filters import TaskFilter
-from .models import Task, StatusEnum, Comment, TimeLog
+from .models import Task, StatusEnum, Comment, TimeLog, Attachment, AttachmentStatus
 from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer,
-                          TasksSerializer, TimeLogSerializer, TaskDurationSerializer, LastMonthDurationSerializer)
-from dateutil.relativedelta import relativedelta
-from django.views.decorators.cache import cache_page
+                          TasksSerializer, TimeLogSerializer, TaskDurationSerializer, LastMonthDurationSerializer,
+                          GetPreassignedUploadUrlSerializer, UploadCompletedSerializer,
+                          AttachmentSerializer)
 
 
 # Create your views here.
-
 class TaskDetailsView(viewsets.ModelViewSet):
     serializer_class = TaskDetailsSerializer
     queryset = Task.objects.all()
@@ -132,6 +135,53 @@ class TaskDetailsView(viewsets.ModelViewSet):
 
         return Response({'Total logged time in hours': logs_duration_in_hours}, status=HTTP_200_OK)
 
+    @action(
+        methods=['put'],
+        detail=True,
+        serializer_class=GetPreassignedUploadUrlSerializer,
+        url_path='get-preassigned-url')
+    def get_preassigned_url(self, request: Request, pk=None):
+
+        task = self.get_object()
+        if task is None:
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        client = Minio(
+            MINIO_ENDPOINT,
+            access_key=MINIO_ACCESS_KEY,
+            secret_key=MINIO_SECRET_KEY,
+            secure=False)
+
+        bucket_name = "files"
+        if not client.bucket_exists(bucket_name):
+            client.make_bucket(bucket_name)
+
+        file_name = request.data['file_name']
+        try:
+            url = client.get_presigned_url(
+                bucket_name=bucket_name,
+                object_name=file_name,
+                expires=timedelta(seconds=300),
+                method="PUT")
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        attachment = Attachment.objects.create(pre_assigned_url=url, task=task, file_name=file_name)
+        attachment.save()
+
+        return Response(GetPreassignedUploadUrlSerializer(attachment).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], serializer_class=AttachmentSerializer, url_path='attachments')
+    def task_attachments_list(self, request: Request, pk: int):
+        task = self.get_object()
+        attachments = task.attachments
+        serializer = self.get_serializer(attachments, many=True)
+        return Response(serializer.data, status=HTTP_200_OK)
+
 
 class LastMontLoggedTimeDurationView(GenericAPIView):
     serializer_class = LastMonthDurationSerializer
@@ -187,3 +237,26 @@ class TaskListDetailsView(ListAPIView):
 
     def get_queryset(self):
         return Task.objects.all()
+
+
+class UploadFileView(APIView):
+    def post(self, request: Request):
+        try:
+            minio_event = request.data['Records'][0]
+            file_key = minio_event['s3']['object']['key']
+            bucket_name = minio_event['s3']['bucket']['name']
+        except (KeyError, IndexError):
+            return Response({'error': 'Invalid MinIO event payload'}, status=status.HTTP_400_BAD_REQUEST)
+
+        attachment = Attachment.objects.get(file_name=file_key)
+        if not attachment:
+            print(f"Attachment with: {file_key} not found")
+
+        minio_base_url = f"http://{MINIO_ENDPOINT}"
+        file_url = f"{minio_base_url}/{bucket_name}/{file_key}"
+        attachment.url = file_url
+        attachment.status = AttachmentStatus.UPLOADED
+        attachment.save()
+        print("File successfully uploaded")
+
+        return Response(status=HTTP_200_OK)
