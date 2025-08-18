@@ -48,9 +48,15 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'django_minio_backend',
+    'django_elasticsearch_dsl',
 
 ]
 
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': 'http://localhost:9200'
+    },
+}
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -157,6 +163,13 @@ STORAGES = {
         # },
     },
 }
+
+CELERY_BROKER_URL = 'amqp://rabbit_user:rabbit_password@localhost:5672//'
+CELERY_TIMEZONE = "Europe/Chisinau"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+# CELERY_RESULT_BACKEND = "redis://redis-primary:6379/1"
+
 
 MINIO_CONSISTENCY_CHECK_ON_START = False
 

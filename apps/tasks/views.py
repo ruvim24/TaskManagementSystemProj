@@ -3,6 +3,8 @@ from pickle import FALSE
 
 from django.db.models import Sum
 from django.utils import timezone
+from elasticsearch import Elasticsearch
+from elasticsearch.dsl.query import MultiMatch
 from minio import Minio
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -14,12 +16,15 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
 from rest_framework.views import APIView
 
 from DjangoProject.settings import MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+from .documents import TaskDocument, CommentDocument
 from .filters import TaskFilter
 from .models import Task, StatusEnum, Comment, TimeLog, Attachment, AttachmentStatus
 from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer,
                           TasksSerializer, TimeLogSerializer, TaskDurationSerializer, LastMonthDurationSerializer,
                           GetPreassignedUploadUrlSerializer, UploadCompletedSerializer,
-                          AttachmentSerializer)
+                          AttachmentSerializer, ElasticSearchSerializer)
+from .utils import task_commented_email, user_assigned_to_task_email, task_completed_email
+import time
 
 
 # Create your views here.
@@ -35,7 +40,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
         serializer = self.get_serializer(task, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         task = serializer.save()
-        task.user_assigned_to_task_email()
+        user_assigned_to_task_email.delay(task_id=task.id)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['put'], serializer_class=NotImplemented)
@@ -43,7 +48,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
         task = self.get_object()
         task.status = StatusEnum.COMPLETED
         task.save()
-        task.task_completed_email()
+        task_completed_email.delay(task_id=task.id)
         return Response({'message': f"Task: f{task.title} completed succesefully"}, status=HTTP_200_OK)
 
     @action(detail=True, methods=['post'], serializer_class=AddCommentToTaskSerializer)
@@ -53,7 +58,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         new_comment = Comment(content=serializer.data['comment'], task=task)
         new_comment.save()
-        task.task_commented_email(new_comment.content)
+        task_commented_email.delay(comment=new_comment.content, task_id=task.id)
         return Response({'comment_id': f"{new_comment.id}"}, status=HTTP_201_CREATED)
 
     @action(detail=True, methods=['get'], serializer_class=CommentSerializer)
@@ -260,3 +265,31 @@ class UploadFileView(APIView):
         print("File successfully uploaded")
 
         return Response(status=HTTP_200_OK)
+
+
+class SearchTasksView(ListAPIView):
+    serializer_class = ElasticSearchSerializer
+
+    def get(self, request: Request, *args, **kwargs):
+        s = TaskDocument.search()
+        query = MultiMatch(query=request.query_params.get('search', ''), fields=['title', 'description'])
+        s = s.query(query)
+        response = s.execute()
+
+        hits = [hit.to_dict() for hit in response.hits]
+
+        return Response(hits, status=HTTP_200_OK)
+
+
+class SearchCommentsView(ListAPIView):
+    serializer_class = ElasticSearchSerializer
+
+    def get(self, request: Request, *args, **kwargs):
+        s = CommentDocument.search()
+        query = MultiMatch(query=request.query_params.get('search', ''), fields=['content'])
+        s = s.query(query)
+        response = s.execute()
+
+        hits = [hit.to_dict() for hit in response.hits]
+
+        return Response(hits, status=HTTP_200_OK)

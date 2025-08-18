@@ -73,3 +73,11 @@ class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
         fields = ('id', 'file_name', 'url')
+
+
+class ElasticSearchSerializer(serializers.Serializer):
+    search = serializers.CharField(
+        max_length=1000,
+        required=False,
+        allow_blank=True
+    )
