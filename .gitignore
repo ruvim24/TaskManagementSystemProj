@@ -14,3 +14,7 @@ static/*
 !static/list.png
 !static/view.png
 
+/celerybeat-schedule.bak
+/celerybeat-schedule.dat
+/celerybeat-schedule.dir
+/poetry.lock
