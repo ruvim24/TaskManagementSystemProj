@@ -7,7 +7,7 @@ def top_user_tasks():
     from django.template.loader import render_to_string
     from django.contrib.auth.models import User
 
-    # print("This task is running triggered by beat scheduler")
+    print("This task is running triggered by beat scheduler")
 
     users = User.objects.all()
     print('Found {} users.'.format(users.count()))
@@ -23,9 +23,9 @@ def top_user_tasks():
             print(f"No tasks found for user {user.username}.")
             continue
 
-        # if user.email is None:
-        #     print(f"User {user.username} has no email, skipping...")
-        #     continue
+        if user.email is None:
+            print(f"User {user.username} has no email, skipping...")
+            continue
 
         context = {
             'user': user,
