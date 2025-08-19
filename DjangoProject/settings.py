@@ -32,7 +32,9 @@ ALLOWED_HOSTS = [
 
 # Application definition
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 1025
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -168,8 +170,9 @@ CELERY_BROKER_URL = 'amqp://rabbit_user:rabbit_password@localhost:5672//'
 CELERY_TIMEZONE = "Europe/Chisinau"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
-# CELERY_RESULT_BACKEND = "redis://redis-primary:6379/1"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/2"
 
+CELERY_TASKS_ALWAYS_EAGER = True
 
 MINIO_CONSISTENCY_CHECK_ON_START = False
 

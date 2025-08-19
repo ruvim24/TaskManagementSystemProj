@@ -42,8 +42,6 @@ def task_commented_email(task_id, comment):
         fail_silently=False,
     )
 
-    print("Email sent to user about new comment on task...")
-
 
 @shared_task
 def user_assigned_to_task_email(task_id):

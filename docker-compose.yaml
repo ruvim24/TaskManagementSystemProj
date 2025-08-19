@@ -1,5 +1,4 @@
-﻿# Folosim versiunea 3.8 pentru a suporta dependenta service_healthy
-version: '3.8'
+﻿version: '3.8'
 
 services:
   #  app:
@@ -91,6 +90,36 @@ services:
       timeout: 10s
       retries: 3
 
+
+  #  celery-worker:
+  #    build: .
+  #    container_name: celery-worker
+  #    command: poetry run celery -A DjangoProject.celery worker -l info
+  #    volumes:
+  #      - .:/app
+  #    environment:
+  #      - CELERY_BROKER_URL=amqp://rabbit_user:rabbit_password@rabbitmq-broker:5672//
+  #      - C_FORCE_ROOT=true
+  #    depends_on:
+  #      - rabbitmq
+  #    networks:
+  #      - my-net
+  #
+  #  celery-beat:
+  #    build: .
+  #    container_name: celery-beat
+  #    command: poetry run celery -A DjangoProject.celery beat -l info
+  #    volumes:
+  #      - .:/app
+  #    environment:
+  #      - CELERY_BROKER_URL=amqp://rabbit_user:rabbit_password@rabbitmq-broker:5672//
+  #      - C_FORCE_ROOT=true
+  #    depends_on:
+  #      - rabbitmq
+  #    networks:
+  #      - my-net
+
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.1.2
     container_name: django-elasticsearch
@@ -108,6 +137,40 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
+    networks:
+      - my-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --silent --fail http://localhost:9200/_cluster/health?wait_for_status=green || exit 1" ]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.1.2
+    container_name: kibana-elasticsearch
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - my-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:5601/api/status || exit 1" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
     networks:
       - my-net
 

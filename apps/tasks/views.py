@@ -58,7 +58,16 @@ class TaskDetailsView(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         new_comment = Comment(content=serializer.data['comment'], task=task)
         new_comment.save()
-        task_commented_email.delay(comment=new_comment.content, task_id=task.id)
+        result = task_commented_email.delay(comment=new_comment.content, task_id=task.id)
+        if result.ready():
+            if result.successful():
+                print("Task executed successfully.")
+            else:
+                print("Task failed with an error.")
+                raise ValidationError('Error sending email notification about new comment')
+        else:
+            print("Task send successfully to celery queue")
+
         return Response({'comment_id': f"{new_comment.id}"}, status=HTTP_201_CREATED)
 
     @action(detail=True, methods=['get'], serializer_class=CommentSerializer)
