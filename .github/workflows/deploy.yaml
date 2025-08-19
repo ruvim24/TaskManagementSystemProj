@@ -18,21 +18,16 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Pasul 1: Folosești o acțiune pentru a configura Poetry
       - name: Install poetry
         uses: snok/install-poetry@v1
         with:
-          # Versiunea de Poetry pe care o vrei
           version: 1.6.1
 
-      # Pasul 2: Instalezi dependențele cu Poetry
       - name: Install dependencies with Poetry
         run: poetry install
 
-      # Pasul 3: Rulezi Ruff folosind Poetry
       - name: Run Ruff linter
         run: poetry run ruff check .
 
-      # Pasul 4: Rulezi testele folosind Poetry
       - name: Run tests
         run: poetry run python manage.py test
