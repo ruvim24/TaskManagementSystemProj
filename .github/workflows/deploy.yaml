@@ -18,12 +18,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          # Adaugă 'cache: poetry' pentru a instala și a configura Poetry.
-          # Aceasta este soluția recomandată care înlocuiește snok/install-poetry@v1.
           cache: 'poetry'
 
       - name: Install dependencies with Poetry
-        # Această comandă funcționează deoarece pasul anterior a instalat Poetry
         run: poetry install
 
       - name: Run Ruff linter
