@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - mil/five
 
 jobs:
   build_and_test:
