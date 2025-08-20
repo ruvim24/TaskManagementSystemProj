@@ -79,8 +79,10 @@ jobs:
           pip install poetry
           poetry install --no-root
           poetry lock
+
       - name: Start Docker Compose services
-        run: docker-compose -f docker-compose-test up -d
+        run: -f docker-compose up -d
+
       - name: Wait for services to be ready
         run: |
           sleep 10
