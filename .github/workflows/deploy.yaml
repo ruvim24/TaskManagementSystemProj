@@ -68,7 +68,6 @@ jobs:
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
-        entrypoint: server /data
 
     #      redis:
     #        image: redis:7
