@@ -51,14 +51,13 @@ jobs:
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
-        options: >-
-          --health-cmd="curl --silent --fail http://localhost:9000/minio/health/live"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+#        options: >-
+#          --health-cmd="curl --silent --fail http://localhost:9000/minio/health/live"
+#          --health-interval=10s
+#          --health-timeout=5s
+#          --health-retries=3
         ports:
           - 9000:9000
-
     env:
       SECRET_KEY: django-insecure-padp=i%lys6-s3-+%vwbja9rxsu$=7undv(8txc$b^j90h)=ta
       DEBUG: "True"
@@ -78,6 +77,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.13
+      - name: Start MinIO container
+        run: |
+          docker run -d \
+            --name minio_server \
+            -p 9000:9000 \
+            -e "MINIO_ROOT_USER=${{ secrets.MINIO_ACCESS_KEY }}" \
+            -e "MINIO_ROOT_PASSWORD=${{ secrets.MINIO_SECRET_KEY }}" \
+            minio/minio server /data
       - name: Install Dependencies
         run: |
           pip install poetry
