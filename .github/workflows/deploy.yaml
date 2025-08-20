@@ -10,59 +10,61 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: django-db
-          POSTGRES_USER: django-user
-          POSTGRES_PASSWORD: passw0rd
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U django-user -d django-db"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-
-      rabbitmq:
-        image: rabbitmq:3
-        ports:
-          - 5672:5672
-        env:
-          RABBITMQ_DEFAULT_USER: rabbit_user
-          RABBITMQ_DEFAULT_PASS: rabbit_password
-        options: >-
-          --health-cmd="rabbitmq-diagnostics -q ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-      minio:
-        image: minio/minio
-        env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
-        ports:
-          - 9000:9000
-    env:
-      SECRET_KEY: django-insecure-padp=i%lys6-s3-+%vwbja9rxsu$=7undv(8txc$b^j90h)=ta
-      DEBUG: "True"
-      TESTING: "True"
-      DB_ENGINE: django.db.backends.postgresql
-      DB_HOST: localhost
-      DB_PORT: 5432
-      POSTGRES_DB: django-db
-      POSTGRES_USER: django-user
-      POSTGRES_PASSWORD: passw0rd
+#    services:
+#      postgres:
+#        image: postgres:15
+#        env:
+#          POSTGRES_DB: django-db
+#          POSTGRES_USER: django-user
+#          POSTGRES_PASSWORD: passw0rd
+#        ports:
+#          - 5432:5432
+#        options: >-
+#          --health-cmd="pg_isready -U django-user -d django-db"
+#          --health-interval=10s
+#          --health-timeout=5s
+#          --health-retries=5
+#        entrypoint:
+#          docker-entrypoint.sh postgres
+#      redis:
+#        image: redis:7
+#        ports:
+#          - 6379:6379
+#        options: >-
+#          --health-cmd="redis-cli ping"
+#          --health-interval=10s
+#          --health-timeout=5s
+#          --health-retries=3
+#
+#      rabbitmq:
+#        image: rabbitmq:3
+#        ports:
+#          - 5672:5672
+#        env:
+#          RABBITMQ_DEFAULT_USER: rabbit_user
+#          RABBITMQ_DEFAULT_PASS: rabbit_password
+#        options: >-
+#          --health-cmd="rabbitmq-diagnostics -q ping"
+#          --health-interval=10s
+#          --health-timeout=5s
+#          --health-retries=3
+#      minio:
+#        image: minio/minio
+#        env:
+#          MINIO_ROOT_USER: minioadmin
+#          MINIO_ROOT_PASSWORD: minioadmin
+#        ports:
+#          - 9000:9000
+#    env:
+#      SECRET_KEY: django-insecure-padp=i%lys6-s3-+%vwbja9rxsu$=7undv(8txc$b^j90h)=ta
+#      DEBUG: "True"
+#      TESTING: "True"
+#      DB_ENGINE: django.db.backends.postgresql
+#      DB_HOST: localhost
+#      DB_PORT: 5432
+#      POSTGRES_DB: django-db
+#      POSTGRES_USER: django-user
+#      POSTGRES_PASSWORD: passw0rd
 
     steps:
       - name: Checkout Repository
@@ -77,6 +79,8 @@ jobs:
           pip install poetry
           poetry install --no-root
           poetry lock
+      - name: Start Docker Compose services
+        run: docker-compose up -d
       - name: Wait for services to be ready
         run: |
           sleep 10
