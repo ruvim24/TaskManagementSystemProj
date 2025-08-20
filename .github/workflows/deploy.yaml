@@ -80,7 +80,7 @@ jobs:
           poetry install --no-root
           poetry lock
       - name: Start Docker Compose services
-        run: docker-compose up -d
+        run: docker-compose-test up -d
       - name: Wait for services to be ready
         run: |
           sleep 10
