@@ -18,12 +18,34 @@ jobs:
           POSTGRES_USER: django-user
           POSTGRES_PASSWORD: passw0rd
         ports:
-          - 5432:5432
+          - 5433:5432
         options: >-
           --health-cmd="pg_isready -U django-user -d django-db"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+      rabbitmq:
+        image: rabbitmq:3
+        ports:
+          - 5672:5672
+        env:
+          RABBITMQ_DEFAULT_USER: rabbit_user
+          RABBITMQ_DEFAULT_PASS: rabbit_password
+        options: >-
+          --health-cmd="rabbitmq-diagnostics -q ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 #      minio:
 #        image: minio/minio
 #        env:
@@ -36,6 +58,7 @@ jobs:
 #          --health-retries=3
 #        ports:
 #          - 9000:9000
+
     env:
       SECRET_KEY: django-insecure-padp=i%lys6-s3-+%vwbja9rxsu$=7undv(8txc$b^j90h)=ta
       DEBUG: "True"
