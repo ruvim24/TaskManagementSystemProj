@@ -61,13 +61,14 @@ jobs:
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
+
         ports:
           - 9000:9000
-#        options: >-
-#          --health-cmd="curl --silent --fail http://localhost:9000/minio/health/live"
-#          --health-interval=10s
-#          --health-timeout=5s
-#          --health-retries=3
+        options: >-
+          --health-cmd="curl --silent --fail http://localhost:9000/minio/health/live"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
 
     #      redis:
@@ -86,10 +87,6 @@ jobs:
       POSTGRES_DB: django-db
       POSTGRES_USER: django-user
       POSTGRES_PASSWORD: passw0rd
-    #      CACHE_BACKEND: django_redis.cache.RedisCache
-    #      CACHE_LOCATION: redis://localhost:6379/1
-    #      CELERY_BROKER_URL: redis://localhost:6379
-    #      CELERY_RESULT_BACKEND: redis://localhost:6379
 
     steps:
       - name: Checkout Repository
