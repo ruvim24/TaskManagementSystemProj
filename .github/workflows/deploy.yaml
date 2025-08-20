@@ -20,7 +20,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U user -d db"
+          --health-cmd="pg_isready -U django-user -d django-db" # Aici am corectat utilizatorul
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -29,14 +29,13 @@ jobs:
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
-
+        options: >-
+          --health-cmd="curl --silent --fail http://localhost:9000/minio/health/live"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
         ports:
           - 9000:9000
-#        options: >-
-#          --health-cmd="curl --silent --fail http://localhost:9000/minio/health/live"
-#          --health-interval=10s
-#          --health-timeout=5s
-#          --health-retries=3
     env:
       SECRET_KEY: django-insecure-padp=i%lys6-s3-+%vwbja9rxsu$=7undv(8txc$b^j90h)=ta
       DEBUG: "True"
@@ -61,6 +60,10 @@ jobs:
           pip install poetry
           poetry install --no-root
           poetry lock
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for PostgreSQL and MinIO to be ready..."
+          sleep 10
       - name: Run makemigrations
         run: |
           poetry run python manage.py makemigrations
