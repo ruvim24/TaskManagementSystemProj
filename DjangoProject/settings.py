@@ -51,12 +51,16 @@ INSTALLED_APPS = [
     'django_elasticsearch_dsl',
 
     # authentication,
+    'django.contrib.sites',
     'django.contrib.auth',
     'django.contrib.messages',
     'allauth',
     'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.github',
 
 ]
+SITE_ID = 1
 
 ELASTICSEARCH_DSL = {
     'default': {
@@ -86,6 +90,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -113,7 +118,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis-primary:6379/1",
+        "LOCATION": "redis://localhost:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -157,19 +162,16 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Provider specific settings
 SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        # For each OAuth based provider, either add a ``SocialApp``
-        # (``socialaccount`` app) containing the required client
-        # credentials, or list them here:
+    'github': {
         'APP': {
-            'client_id': '123',
-            'secret': '456',
+            'client_id': 'Ov23lia487wKwwf5GLlE',
+            'secret': '88bc004e9b0bb5c5499580f8e9a68565b0345d23',
             'key': ''
         }
     }
 }
+LOGIN_REDIRECT_URL = '/accounts/profile/'
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Task Managment System API',

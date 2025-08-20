@@ -1,9 +1,8 @@
 from datetime import datetime, timedelta
-from pickle import FALSE
 
 from django.db.models import Sum
+from django.shortcuts import render
 from django.utils import timezone
-from elasticsearch import Elasticsearch
 from elasticsearch.dsl.query import MultiMatch
 from minio import Minio
 from rest_framework import viewsets, status
@@ -21,10 +20,8 @@ from .filters import TaskFilter
 from .models import Task, StatusEnum, Comment, TimeLog, Attachment, AttachmentStatus
 from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer,
                           TasksSerializer, TimeLogSerializer, TaskDurationSerializer, LastMonthDurationSerializer,
-                          GetPreassignedUploadUrlSerializer, UploadCompletedSerializer,
-                          AttachmentSerializer, ElasticSearchSerializer)
+                          GetPreassignedUploadUrlSerializer, AttachmentSerializer, ElasticSearchSerializer)
 from .utils import task_commented_email, user_assigned_to_task_email, task_completed_email
-import time
 
 
 # Create your views here.
@@ -302,3 +299,7 @@ class SearchCommentsView(ListAPIView):
         hits = [hit.to_dict() for hit in response.hits]
 
         return Response(hits, status=HTTP_200_OK)
+
+
+def profile(request):
+    return render(request, 'profile.html')

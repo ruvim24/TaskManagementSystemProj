@@ -2,7 +2,7 @@
 from rest_framework.routers import DefaultRouter
 
 from .views import (TaskDetailsView, TaskListDetailsView, LastMontLoggedTimeDurationView, TasksListDurationView,
-                    TopTasksLastMonthView, UploadFileView, SearchTasksView, SearchCommentsView)
+                    TopTasksLastMonthView, UploadFileView, SearchTasksView, SearchCommentsView, profile)
 from django.views.decorators.cache import cache_page
 
 router = DefaultRouter()
