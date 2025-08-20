@@ -18,7 +18,7 @@ jobs:
           POSTGRES_USER: django-user
           POSTGRES_PASSWORD: passw0rd
         ports:
-          - 5433:5432
+          - 5432:5432
         options: >-
           --health-cmd="pg_isready -U django-user -d django-db"
           --health-interval=10s
@@ -51,11 +51,6 @@ jobs:
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
-#        options: >-
-#          --health-cmd="curl --silent --fail http://localhost:9000/minio/health/live"
-#          --health-interval=10s
-#          --health-timeout=5s
-#          --health-retries=3
         ports:
           - 9000:9000
     env:
@@ -77,14 +72,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.13
-      - name: Start MinIO container
-        run: |
-          docker run -d \
-            --name minio_server \
-            -p 9000:9000 \
-            -e "MINIO_ROOT_USER=${{ secrets.MINIO_ACCESS_KEY }}" \
-            -e "MINIO_ROOT_PASSWORD=${{ secrets.MINIO_SECRET_KEY }}" \
-            minio/minio server /data
       - name: Install Dependencies
         run: |
           pip install poetry
@@ -92,7 +79,6 @@ jobs:
           poetry lock
       - name: Wait for services to be ready
         run: |
-          echo "Waiting for PostgreSQL and MinIO to be ready..."
           sleep 10
       - name: Run makemigrations
         run: |
