@@ -56,6 +56,19 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+      minio:
+        image: minio/minio
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd="curl --silent --fail http://localhost:9000/minio/health/live"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        entrypoint: server /data
 
     #      redis:
     #        image: redis:7
