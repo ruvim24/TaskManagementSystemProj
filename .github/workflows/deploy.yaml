@@ -1,36 +1,4 @@
-﻿#name: Django CI
-#
-#on:
-#  push:
-#    branches:
-#      - master
-#      - mil/five
-#
-#jobs:
-#  build_and_test:
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Python
-#        uses: actions/setup-python@v5
-#        with:
-#          python-version: '3.11'
-#          cache: 'poetry'
-#
-#      - name: Install dependencies with Poetry
-#        run: poetry install
-#
-#      - name: Run Ruff linter
-#        run: poetry run ruff check .
-#
-#      - name: Run tests
-#        run: poetry run python manage.py test
-
-
-name: Django CI/CD
+﻿name: Django CI/CD
 
 on:
   push:
@@ -52,7 +20,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U user -d db"
+          --health-cmd="pg_isready -U django-user -d django-db"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -61,7 +29,6 @@ jobs:
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
-
         ports:
           - 9000:9000
         options: >-
@@ -69,24 +36,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
-
-
-    #      redis:
-    #        image: redis:7
-    #        ports:
-    #          - 6379:6379
-    #        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 3
-
-    env:
-      SECRET_KEY: django-insecure-padp=i%lys6-s3-+%vwbja9rxsu$=7undv(8txc$b^j90h)=ta
-      DEBUG: "True"
-      TESTING: "True"
-      DB_ENGINE: django.db.backends.postgresql
-      DB_HOST: localhost
-      DB_PORT: 5432
-      POSTGRES_DB: django-db
-      POSTGRES_USER: django-user
-      POSTGRES_PASSWORD: passw0rd
+        command: server /data # Adaugă această linie
 
     steps:
       - name: Checkout Repository
@@ -101,9 +51,10 @@ jobs:
           pip install poetry
           poetry install --no-root
           poetry lock
-      - name: Start MinIO container
+
+      - name: Wait for services
         run: |
-          docker run -d --name minio_server -p 9000:9000 -e "MINIO_ROOT_USER=minioadmin" -e "MINIO_ROOT_PASSWORD=minioadmin" minio/minio server /data
+          sleep 10 # Așteaptă 10 secunde pentru a permite serviciilor să pornească
 
       - name: Run makemigrations
         run: |
