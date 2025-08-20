@@ -1,24 +1,20 @@
 ﻿version: '3.8'
 
 services:
-  #  app:
-  #    build: .
-  #    container_name: app
-  #    ports:
-  #      - "8000:8000"
-  #    networks:
-  #      - my-net
-  #    depends_on:
-  #      db:
-  #        condition: service_started
-  #      redis:
-  #        condition: service_started
-  #      minio:
-  #        condition: service_healthy
-  ##    environment:
-  ##      MINIO_ENDPOINT: "http://minio:9000"
-  ##      MINIO_ACCESS_KEY: "minio_user"
-  ##      MINIO_SECRET_KEY: "minio_password"
+  app:
+    build: .
+    container_name: app
+    ports:
+      - "8000:8000"
+    networks:
+      - my-net
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      minio:
+        condition: service_healthy
 
   db:
     image: postgres:14
@@ -50,7 +46,6 @@ services:
     container_name: redis-primary
     ports:
       - "6379:6379"
-
     networks:
       - my-net
 
@@ -89,35 +84,34 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - my-net
 
+  celery-worker:
+    build: .
+    container_name: celery-worker
+    command: poetry run celery -A DjangoProject.celery worker -l info
+    environment:
+      - C_FORCE_ROOT=true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - my-net
 
-  #  celery-worker:
-  #    build: .
-  #    container_name: celery-worker
-  #    command: poetry run celery -A DjangoProject.celery worker -l info
-  #    volumes:
-  #      - .:/app
-  #    environment:
-  #      - CELERY_BROKER_URL=amqp://rabbit_user:rabbit_password@rabbitmq-broker:5672//
-  #      - C_FORCE_ROOT=true
-  #    depends_on:
-  #      - rabbitmq
-  #    networks:
-  #      - my-net
-  #
-  #  celery-beat:
-  #    build: .
-  #    container_name: celery-beat
-  #    command: poetry run celery -A DjangoProject.celery beat -l info
-  #    volumes:
-  #      - .:/app
-  #    environment:
-  #      - CELERY_BROKER_URL=amqp://rabbit_user:rabbit_password@rabbitmq-broker:5672//
-  #      - C_FORCE_ROOT=true
-  #    depends_on:
-  #      - rabbitmq
-  #    networks:
-  #      - my-net
+  celery-beat:
+    build: .
+    container_name: celery-beat
+    command: poetry run celery -A DjangoProject.celery beat -l info
+    environment:
+      - C_FORCE_ROOT=true
+    depends_on:
+      - rabbitmq
+      - redis
+    networks:
+      - my-net
 
 
   elasticsearch:

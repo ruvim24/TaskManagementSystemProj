@@ -64,7 +64,7 @@ SITE_ID = 1
 
 ELASTICSEARCH_DSL = {
     'default': {
-        'hosts': 'http://localhost:9200'
+        'hosts': 'elasticsearch:9200'
     },
 }
 MIDDLEWARE = [
@@ -110,15 +110,15 @@ DATABASES = {
         'NAME': 'django-db',
         'USER': 'django-user',
         'PASSWORD': 'passw0rd',
-        'HOST': 'localhost',  # db
-        'PORT': '5433',  # 5432
+        'HOST': 'db',  # db
+        'PORT': '5432',  # 5432
     }
 }
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379/1",
+        "LOCATION": "redis://redis:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -197,17 +197,17 @@ STORAGES = {
     },
 }
 
-CELERY_BROKER_URL = 'amqp://rabbit_user:rabbit_password@localhost:5672//'
+CELERY_BROKER_URL = 'amqp://rabbit_user:rabbit_password@rabbitmq:5672//'
 CELERY_TIMEZONE = "Europe/Chisinau"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
-CELERY_RESULT_BACKEND = "redis://localhost:6379/2"
+CELERY_RESULT_BACKEND = "redis://redis:6379/2"
 
 CELERY_TASKS_ALWAYS_EAGER = True
 
 MINIO_CONSISTENCY_CHECK_ON_START = False
 
-MINIO_ENDPOINT = 'localhost:9000'  # minio:9000
+MINIO_ENDPOINT = 'minio:9000'  # minio:9000
 MINIO_ACCESS_KEY = 'minio_user'
 MINIO_SECRET_KEY = 'minio_password'
 MINIO_USE_HTTPS = False

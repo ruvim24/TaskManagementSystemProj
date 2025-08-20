@@ -1,20 +1,24 @@
-.idea/
-venv/
+# Exclude Python stuff
+__pycache__/
 *.pyc
-media/*
-db.sqlite3
-.coverage
-htmlcov/*
+*.pyo
+*.pyd
+*.sqlite3
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Git
+.git
+.gitignore
+
+# IDEs
+.idea/
+.vscode/
+
+# Other caches
 .mypy_cache/
+.pytest_cache/
 
-# Static files
-static/*
-!static/blog_list.png
-!static/create.png
-!static/list.png
-!static/view.png
-
-/celerybeat-schedule.bak
-/celerybeat-schedule.dat
-/celerybeat-schedule.dir
-/poetry.lock
