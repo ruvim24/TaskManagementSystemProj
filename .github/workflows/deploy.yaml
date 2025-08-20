@@ -42,6 +42,41 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: django-db
+          POSTGRES_USER: django-user
+          POSTGRES_PASSWORD: passw0rd
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U user -d db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    #      redis:
+    #        image: redis:7
+    #        ports:
+    #          - 6379:6379
+    #        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 3
+
+    env:
+      SECRET_KEY: django-insecure-padp=i%lys6-s3-+%vwbja9rxsu$=7undv(8txc$b^j90h)=ta
+      DEBUG: "True"
+      TESTING: "True"
+      DB_ENGINE: django.db.backends.postgresql
+      DB_HOST: localhost
+      DB_PORT: 5432
+      POSTGRES_DB: django-db
+      POSTGRES_USER: django-user
+      POSTGRES_PASSWORD: passw0rd
+    #      CACHE_BACKEND: django_redis.cache.RedisCache
+    #      CACHE_LOCATION: redis://localhost:6379/1
+    #      CELERY_BROKER_URL: redis://localhost:6379
+    #      CELERY_RESULT_BACKEND: redis://localhost:6379
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -50,15 +85,17 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.13
-
       - name: Install Dependencies
         run: |
           pip install poetry
           poetry install --no-root
           poetry lock
-
-#          pip install -r requirements.txt
-
+      - name: Run makemigrations
+        run: |
+          poetry run python manage.py makemigrations
+      - name: Run migrate
+        run: |
+          poetry run python manage.py migrate --noinput
       - name: Run Tests
         run: |
           poetry run python manage.py test
