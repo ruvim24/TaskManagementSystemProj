@@ -1,5 +1,5 @@
-﻿from django_elasticsearch_dsl.registries import registry
-from django_elasticsearch_dsl import Document, fields
+﻿from django_elasticsearch_dsl import Document, fields
+from django_elasticsearch_dsl.registries import registry
 
 from apps.tasks.models import Task, Comment
 
@@ -20,6 +20,7 @@ class TaskDocument(Document):
             'description',
             'status',
         ]
+
 
 @registry.register_document
 class CommentDocument(Document):

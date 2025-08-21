@@ -35,7 +35,7 @@ def top_user_tasks():
         html_content = render_to_string('tasks/email/top_tasks_report.html', context)
 
         msg = EmailMessage(
-            f'Subiect: Raport Top 20 Task-uri',
+            'Subiect: Raport Top 20 Task-uri',
             html_content,
             'expeditor@exemplu.com',
             [user.email],

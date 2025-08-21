@@ -1,11 +1,10 @@
-﻿from datetime import datetime, timedelta
+﻿from datetime import timedelta
 
 import factory
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from apps.tasks.models import Task, StatusEnum, Comment, TimeLog
-import pytz
-from django.utils import timezone
 
 
 class UserFactory(factory.django.DjangoModelFactory):
