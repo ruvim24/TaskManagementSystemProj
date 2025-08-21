@@ -38,6 +38,14 @@ services:
     networks:
       - my-net
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+
   minio:
     image: minio/minio:latest
     environment:
