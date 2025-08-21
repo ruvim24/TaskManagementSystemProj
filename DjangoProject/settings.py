@@ -186,14 +186,14 @@ STORAGES = {
             "bucket_name": "my-media-bucket",
             "auto_create_bucket": True,
         },
-    },
-    "staticfiles": {
-        "BACKEND": "django_minio_backend.models.MinioBackendStatic",
-        # "OPTIONS": {
-        #     "bucket_name": "my-static-bucket",
-        #     "auto_create_bucket": True,
-        # },
-    },
+    }
+    # "staticfiles": {
+    #     "BACKEND": "django_minio_backend.models.MinioBackendStatic",
+    #     # "OPTIONS": {
+    #     #     "bucket_name": "my-static-bucket",
+    #     #     "auto_create_bucket": True,
+    #     # },
+    # },
 }
 
 CELERY_BROKER_URL = 'amqp://rabbit_user:rabbit_password@rabbitmq:5672//'
