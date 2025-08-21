@@ -66,6 +66,8 @@ jobs:
       POSTGRES_DB: django-db
       POSTGRES_USER: django-user
       POSTGRES_PASSWORD: passw0rd
+      MINIO_ENDPOINT: minio:9000
+
 
     steps:
       - name: Checkout Repository
