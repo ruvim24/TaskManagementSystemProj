@@ -7,104 +7,31 @@ on:
       - mil/five
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: django-db
-          POSTGRES_USER: django-user
-          POSTGRES_PASSWORD: passw0rd
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U django-user -d django-db"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-
-      rabbitmq:
-        image: rabbitmq:3
-        ports:
-          - 5672:5672
-        env:
-          RABBITMQ_DEFAULT_USER: rabbit_user
-          RABBITMQ_DEFAULT_PASS: rabbit_password
-        options: >-
-          --health-cmd="rabbitmq-diagnostics -q ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-
-      minio:
-        image: minio/minio
-        env:
-          MINIO_ACCESS_KEY: minioadmin
-          MINIO_SECRET_KEY: minioadmin
-        ports:
-          - 9000:9000
-
-    env:
-      SECRET_KEY: django-insecure-padp=i%lys6-s3-+%vwbja9rxsu$=7undv(8txc$b^j90h)=ta
-      DEBUG: "True"
-      TESTING: "True"
-      DB_ENGINE: django.db.backends.postgresql
-      DB_HOST: localhost
-      DB_PORT: 5432
-      POSTGRES_DB: django-db
-      POSTGRES_USER: django-user
-      POSTGRES_PASSWORD: passw0rd
-      MINIO_ENDPOINT: localhost:9000
-
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.13
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install Dependencies
-        run: |
-          pip install poetry
-          poetry install --no-root
-          poetry lock
-
-      #      - name: Set up Docker Buildx
-      #        uses: docker/setup-buildx-action@v3
-      #
-      #      - name: Run Docker Compose
-      #        uses: hoverkraft-tech/compose-action@v0.0.0
-      #        with:
-      #          compose-file: './docker-compose.test.yml'
-      #          run-args: 'up --build --abort-on-container-exit --exit-code-from test-service'
+      - name: Build and Start Containers
+        run: docker-compose -f docker-compose.test.yml up -d --build
 
       - name: Wait for services to be ready
-        run: |
-          sleep 10
+        run: sleep 15
 
       - name: Run makemigrations
-        run: |
-          poetry run python manage.py makemigrations
+        run: docker-compose -f docker-compose.test.yml exec -T app poetry run python manage.py makemigrations
 
       - name: Run migrate
-        run: |
-          poetry run python manage.py migrate --noinput
+        run: docker-compose -f docker-compose.test.yml exec -T app poetry run python manage.py migrate --noinput
 
       - name: Run Tests
-        run: |
-          poetry run python manage.py test
+        run: docker-compose -f docker-compose.test.yml exec -T app poetry run pytest
+
+      - name: Stop Containers
+        if: always()
+        run: docker-compose -f docker-compose.test.yml down -v

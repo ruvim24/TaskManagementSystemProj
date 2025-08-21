@@ -1,0 +1,58 @@
+﻿version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: app
+    command: sh -c "poetry run python manage.py migrate && poetry run pytest"
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    environment:
+      POSTGRES_USER: django-user
+      POSTGRES_PASSWORD: passw0rd
+      POSTGRES_DB: django-db
+      POSTGRES_HOST: db
+      REDIS_HOST: redis
+      MINIO_STORAGE_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: minio_user
+      MINIO_ROOT_PASSWORD: minio_password
+      MINIO_STORAGE_USE_HTTPS: "false"
+    networks:
+      - my-net
+
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: django-user
+      POSTGRES_PASSWORD: passw0rd
+      POSTGRES_DB: django-db
+    networks:
+      - my-net
+
+  redis:
+    image: redis:latest
+    networks:
+      - my-net
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: minio_user
+      MINIO_ROOT_PASSWORD: minio_password
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - my-net
+
+networks:
+  my-net:
+    driver: bridge
