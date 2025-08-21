@@ -81,3 +81,4 @@ class ElasticSearchSerializer(serializers.Serializer):
         required=False,
         allow_blank=True
     )
+

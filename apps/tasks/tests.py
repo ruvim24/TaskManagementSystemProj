@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.tasks.factories import TaskFactory, CommentFactory, TimeLogFactory
-from apps.tasks.models import Task, Comment, TimeLog
+from apps.tasks.models import Task, Comment
 
 
 # Create your tests here.

@@ -1,9 +1,9 @@
 ﻿from django.urls import path, include
+from django.views.decorators.cache import cache_page
 from rest_framework.routers import DefaultRouter
 
 from .views import (TaskDetailsView, TaskListDetailsView, LastMontLoggedTimeDurationView, TasksListDurationView,
-                    TopTasksLastMonthView, UploadFileView, SearchTasksView, SearchCommentsView, profile)
-from django.views.decorators.cache import cache_page
+                    TopTasksLastMonthView, UploadFileView, SearchTasksView, SearchCommentsView)
 
 router = DefaultRouter()
 router.register(r'tasks', TaskDetailsView, basename='tasks')
