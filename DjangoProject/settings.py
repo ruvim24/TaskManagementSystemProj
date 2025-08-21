@@ -64,7 +64,7 @@ SITE_ID = 1
 
 ELASTICSEARCH_DSL = {
     'default': {
-        'hosts': 'elasticsearch:9200'
+        'hosts': 'http://elasticsearch:9200'
     },
 }
 MIDDLEWARE = [
