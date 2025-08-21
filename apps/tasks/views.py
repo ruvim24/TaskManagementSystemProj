@@ -29,7 +29,8 @@ class TaskDetailsView(viewsets.ModelViewSet):
     serializer_class = TaskDetailsSerializer
     queryset = Task.objects.all()
 
-    get_serializer_class = lambda self: self.serializer_class
+    def get_serializer_class(self):
+        return self.serializer_class
 
     @action(detail=True, methods=['put'], serializer_class=AssignUserSerializer, url_path='assign-user')
     def assign_user(self, request, *args, **kwargs):
