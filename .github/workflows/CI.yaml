@@ -17,21 +17,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-#      - name: Run app
       - uses: adambirds/docker-compose-action@v1.5.0
         with:
           compose-file: "./docker-compose.test.yaml"
           test-container: "app"
           test-command: "poetry run python manage.py test"
-
-      - name: Wait for services to be ready
-        run: sleep 15
-
-      #      - name: Run makemigrations
-      #        run: docker compose -f docker-compose.test.yml exec -T app poetry run python manage.py makemigrations
-      #
-      #      - name: Run migrate
-      #        run: docker compose -f docker-compose.test.yml exec -T app poetry run python manage.py migrate --noinput
 
       - name: Stop Containers
         if: always()
