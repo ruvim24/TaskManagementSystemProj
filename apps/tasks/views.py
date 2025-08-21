@@ -4,7 +4,7 @@ from django.db.models import Sum
 from django.shortcuts import render
 from django.utils import timezone
 from elasticsearch.dsl.query import MultiMatch
-from minio import Minio, MinioBackend
+from minio import Minio
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -161,7 +161,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        client = MinioBackend(
+        client = Minio(
             MINIO_ENDPOINT,
             access_key=MINIO_ACCESS_KEY,
             secret_key=MINIO_SECRET_KEY,
