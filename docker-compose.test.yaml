@@ -4,7 +4,6 @@ services:
   app:
     build: .
     container_name: app
-    command: sh -c "poetry run python manage.py migrate && poetry run pytest"
     depends_on:
       db:
         condition: service_started
