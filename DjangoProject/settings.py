@@ -110,8 +110,8 @@ DATABASES = {
         'NAME': 'django-db',
         'USER': 'django-user',
         'PASSWORD': 'passw0rd',
-        'HOST': 'db',  # db
-        'PORT': '5432',  # 5432
+        'HOST': 'db',
+        'PORT': '5432',
     }
 }
 
@@ -179,7 +179,6 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
 }
 
-# minio settings
 STORAGES = {
     "default": {
         "BACKEND": "django_minio_backend.models.MinioBackend",
