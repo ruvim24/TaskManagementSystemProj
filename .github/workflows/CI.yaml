@@ -24,14 +24,14 @@ jobs:
         run: sleep 15
 
       - name: Run makemigrations
-        run: docker-compose -f docker-compose.test.yml exec -T app poetry run python manage.py makemigrations
+        run: docker compose -f docker-compose.test.yml exec -T app poetry run python manage.py makemigrations
 
       - name: Run migrate
-        run: docker-compose -f docker-compose.test.yml exec -T app poetry run python manage.py migrate --noinput
+        run: docker compose -f docker-compose.test.yml exec -T app poetry run python manage.py migrate --noinput
 
       - name: Run Tests
-        run: docker-compose -f docker-compose.test.yml exec -T app poetry run pytest
+        run: docker compose -f docker-compose.test.yml exec -T app poetry run pytest
 
       - name: Stop Containers
         if: always()
-        run: docker-compose -f docker-compose.test.yml down -v
+        run: docker compose -f docker-compose.test.yml down -v
