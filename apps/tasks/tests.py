@@ -258,7 +258,7 @@ class TaskTests(TestCase):
         TimeLogFactory.create_batch(2, duration=120, task=task2)
 
         # act
-        response = client.get('/api/tasks/duration/')
+        response = client.get('/api/tasks-list-duration/')
 
         # assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -286,7 +286,7 @@ class TaskTests(TestCase):
             duration=60)
 
         # act
-        response = client.get('/api/tasks/top-tasks/')
+        response = client.get('/api/top-tasks/')
 
         # assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -299,7 +299,7 @@ class TaskTests(TestCase):
         TaskFactory.create_batch(10)
 
         # act
-        response = client.get('/api/tasks/list/')
+        response = client.get('/api/tasks-list-details/')
 
         # assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -314,7 +314,7 @@ class TaskTests(TestCase):
         tasks[1].save()
 
         # act
-        response = client.get('/api/tasks/list/', {'status': 'completed'})
+        response = client.get('/api/tasks-list-details/', {'status': 'completed'})
 
         # assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -329,7 +329,7 @@ class TaskTests(TestCase):
         tasks[1].save()
 
         # act
-        response = client.get('/api/tasks/list/', {'search': 'search'})
+        response = client.get('/api/tasks-list-details/', {'search': 'search'})
 
         # assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)

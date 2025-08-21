@@ -4,6 +4,8 @@ services:
   app:
     build: .
     container_name: app
+    ports:
+      - "8000:8000"
     depends_on:
       db:
         condition: service_started
@@ -71,6 +73,48 @@ services:
     networks:
       - my-net
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq-broker
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbit_user
+      - RABBITMQ_DEFAULT_PASS=rabbit_password
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - my-net
+
+  celery-worker:
+    build: .
+    container_name: celery-worker
+    command: poetry run celery -A DjangoProject.celery worker -l info
+    environment:
+      - C_FORCE_ROOT=true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - my-net
+
+  celery-beat:
+    build: .
+    container_name: celery-beat
+    command: poetry run celery -A DjangoProject.celery beat -l info
+    environment:
+      - C_FORCE_ROOT=true
+    depends_on:
+      - rabbitmq
+      - redis
+    networks:
+      - my-net
 networks:
   my-net:
     driver: bridge
