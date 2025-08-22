@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+
 from django.db.models import Sum
 from django.shortcuts import render
 from django.utils import timezone
@@ -7,16 +8,16 @@ from minio import Minio
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import get_object_or_404, ListAPIView, GenericAPIView
+from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
 from rest_framework.views import APIView
+
 from DjangoProject.settings import MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
 from .documents import TaskDocument, CommentDocument
 from .filters import TaskFilter
 from .models import Task, StatusEnum, Comment, TimeLog, Attachment, AttachmentStatus
-from .utils import task_commented_email, user_assigned_to_task_email, task_completed_email
 from .serializers import (
     TaskDetailsSerializer,
     AssignUserSerializer,
@@ -30,6 +31,7 @@ from .serializers import (
     AttachmentSerializer,
     ElasticSearchSerializer
 )
+from .utils import task_commented_email, user_assigned_to_task_email, task_completed_email
 
 
 # Create your views here.
