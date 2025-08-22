@@ -23,7 +23,8 @@ dependencies = [
     "django-allauth[socialaccount] (>=65.11.0,<66.0.0)",
     "factory-boy(>=3.2.0,<4.0.0)",
     "pytz",
-    "ruff"
+    "ruff",
+    "django-environ"
 ]
 
 [build-system]
