@@ -1,16 +1,13 @@
 from datetime import datetime
-
 from dateutil.relativedelta import relativedelta
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-
 from apps.tasks.factories import TaskFactory, CommentFactory, TimeLogFactory
 from apps.tasks.models import Task, Comment
 
 
-# Create your tests here.
 class TaskTests(TestCase):
     def setUp(self) -> None:
         pass

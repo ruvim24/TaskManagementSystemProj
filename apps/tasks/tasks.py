@@ -2,23 +2,26 @@
 
 
 @app.task
-def top_user_tasks():
+def send_users_top_tasks_every_week():
     from django.core.mail import EmailMessage
     from django.template.loader import render_to_string
     from django.contrib.auth.models import User
 
-    print("This task is running triggered by beat scheduler")
-
     users = User.objects.all()
-    print('Found {} users.'.format(users.count()))
+
+    print(f'Found {users.count()} users.')
     if not users.exists():
         print("No users found.")
         return
 
     for user in users:
         print(f"Processing user: {user.username}")
-        top_tasks = user.tasks.filter(status="open", time_logs__duration__isnull=False).order_by("time_logs__duration")[
-                    :20]
+        top_tasks = (
+            user.tasks
+            .filter(status="open", time_logs__duration__isnull=False)
+            .order_by("time_logs__duration")[:20]
+        )
+
         if not top_tasks:
             print(f"No tasks found for user {user.username}.")
             continue

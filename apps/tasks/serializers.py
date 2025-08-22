@@ -1,6 +1,5 @@
 ﻿from django.contrib.auth.models import User
 from rest_framework import serializers
-
 from apps.tasks.models import Task, Comment, TimeLog, Attachment
 from apps.users.serializers import UserSerializer
 
@@ -64,11 +63,6 @@ class GetPreassignedUploadUrlSerializer(serializers.ModelSerializer):
         fields = ['id', 'url', 'file_name', 'status', 'task_id']
 
 
-class UploadCompletedSerializer(serializers.Serializer):
-    attachment_id = serializers.PrimaryKeyRelatedField(queryset=Attachment.objects.all())
-    url = serializers.URLField(required=True)
-
-
 class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
@@ -81,4 +75,3 @@ class ElasticSearchSerializer(serializers.Serializer):
         required=False,
         allow_blank=True
     )
-

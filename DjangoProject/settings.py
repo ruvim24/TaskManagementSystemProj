@@ -17,7 +17,6 @@ env = environ.Env(
     DEBUG=(bool, False)
 )
 
-# citim fișierul .env din rădăcina proiectului (lângă manage.py)
 environ.Env.read_env(BASE_DIR / ".env")
 
 # -----------------------------

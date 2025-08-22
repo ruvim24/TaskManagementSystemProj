@@ -1,9 +1,16 @@
 ﻿from django.urls import path, include
 from django.views.decorators.cache import cache_page
 from rest_framework.routers import DefaultRouter
-
-from .views import (TaskDetailsView, TaskListDetailsView, LastMontLoggedTimeDurationView, TasksListDurationView,
-                    TopTasksLastMonthView, UploadFileView, SearchTasksView, SearchCommentsView)
+from .views import (
+    TaskDetailsView,
+    TaskListDetailsView,
+    LastMontLoggedTimeDurationView,
+    TasksListDurationView,
+    TopTasksLastMonthView,
+    UploadFileView,
+    SearchTasksView,
+    SearchCommentsView
+)
 
 router = DefaultRouter()
 router.register(r'tasks', TaskDetailsView, basename='tasks')
@@ -14,11 +21,9 @@ urlpatterns = [
          name='last_month_logged_time_duration'),
     path('tasks-list-duration/', TasksListDurationView.as_view(), name='tasks_list_duration'),
     path('top-tasks/', cache_page(60)(TopTasksLastMonthView.as_view()), name='top_tasks_last_month'),
-
     path('tasks/upload-webhook/', UploadFileView.as_view(), name='upload_webhook'),
     path('tasks/search/', SearchTasksView.as_view(), name='search_tasks'),
     path('comments/search', SearchCommentsView.as_view(), name='search_comment'),
-
     path('', include(router.urls)),
 
 ]

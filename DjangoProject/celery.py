@@ -14,7 +14,7 @@ app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
     'top-20-tasks-report-every-week': {
-        'task': 'apps.tasks.tasks.top_user_tasks',
+        'task': 'apps.tasks.tasks.send_users_top_tasks_every_week',
         'schedule': crontab(minute='30', hour='8', day_of_week='1-5')
     },
 }

@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-
 from django.db.models import Sum
 from django.shortcuts import render
 from django.utils import timezone
@@ -13,15 +12,24 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
 from rest_framework.views import APIView
-
 from DjangoProject.settings import MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
 from .documents import TaskDocument, CommentDocument
 from .filters import TaskFilter
 from .models import Task, StatusEnum, Comment, TimeLog, Attachment, AttachmentStatus
-from .serializers import (TaskDetailsSerializer, AssignUserSerializer, AddCommentToTaskSerializer, CommentSerializer,
-                          TasksSerializer, TimeLogSerializer, TaskDurationSerializer, LastMonthDurationSerializer,
-                          GetPreassignedUploadUrlSerializer, AttachmentSerializer, ElasticSearchSerializer)
 from .utils import task_commented_email, user_assigned_to_task_email, task_completed_email
+from .serializers import (
+    TaskDetailsSerializer,
+    AssignUserSerializer,
+    AddCommentToTaskSerializer,
+    CommentSerializer,
+    TasksSerializer,
+    TimeLogSerializer,
+    TaskDurationSerializer,
+    LastMonthDurationSerializer,
+    GetPreassignedUploadUrlSerializer,
+    AttachmentSerializer,
+    ElasticSearchSerializer
+)
 
 
 # Create your views here.
@@ -35,10 +43,13 @@ class TaskDetailsView(viewsets.ModelViewSet):
     @action(detail=True, methods=['put'], serializer_class=AssignUserSerializer, url_path='assign-user')
     def assign_user(self, request, *args, **kwargs):
         task = self.get_object()
+
         serializer = self.get_serializer(task, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+
         task = serializer.save()
         user_assigned_to_task_email.delay(task_id=task.id)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['put'], serializer_class=NotImplemented)
@@ -46,25 +57,22 @@ class TaskDetailsView(viewsets.ModelViewSet):
         task = self.get_object()
         task.status = StatusEnum.COMPLETED
         task.save()
+
         task_completed_email.delay(task_id=task.id)
+
         return Response({'message': f"Task: f{task.title} completed succesefully"}, status=HTTP_200_OK)
 
     @action(detail=True, methods=['post'], serializer_class=AddCommentToTaskSerializer)
     def comment(self, request: Request, pk: int) -> Response:
-        task = get_object_or_404(Task, id=pk)
+        task = self.get_object()
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         new_comment = Comment(content=serializer.data['comment'], task=task)
         new_comment.save()
-        result = task_commented_email.delay(comment=new_comment.content, task_id=task.id)
-        if result.ready():
-            if result.successful():
-                print("Task executed successfully.")
-            else:
-                print("Task failed with an error.")
-                raise ValidationError('Error sending email notification about new comment')
-        else:
-            print("Task send successfully to celery queue")
+
+        task_commented_email.delay(comment=new_comment.content, task_id=task.id)
 
         return Response({'comment_id': f"{new_comment.id}"}, status=HTTP_201_CREATED)
 
@@ -83,7 +91,8 @@ class TaskDetailsView(viewsets.ModelViewSet):
             task.time_logs.filter(
                 start_time__isnull=False,
                 end_time__isnull=True)
-            .exists())
+            .exists()
+        )
 
         if is_timer_started:
             raise ValidationError('Timer already started')
@@ -141,8 +150,14 @@ class TaskDetailsView(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], serializer_class=NotImplemented, url_path='logged-time-duration')
     def logged_time_duration(self, request: Request, pk=None):
-        time_logs = self.get_object().time_logs.filter(duration__isnull=False)
-        logs_duration = time_logs.aggregate(Sum('duration'))['duration__sum']
+
+        logs_duration = (
+            self.get_object()
+            .time_logs
+            .filter(duration__isnull=False)
+            .aggregate(Sum('duration'))['duration__sum']
+        )
+
         logs_duration_in_hours = round(logs_duration / 60, 1)
 
         return Response({'Total logged time in hours': logs_duration_in_hours}, status=HTTP_200_OK)
@@ -159,14 +174,14 @@ class TaskDetailsView(viewsets.ModelViewSet):
             return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
 
         client = Minio(
             MINIO_ENDPOINT,
             access_key=MINIO_ACCESS_KEY,
             secret_key=MINIO_SECRET_KEY,
-            secure=False)
+            secure=False
+        )
 
         bucket_name = "files"
         if not client.bucket_exists(bucket_name):
@@ -178,7 +193,8 @@ class TaskDetailsView(viewsets.ModelViewSet):
                 bucket_name=bucket_name,
                 object_name=file_name,
                 expires=timedelta(seconds=300),
-                method="PUT")
+                method="PUT"
+            )
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -200,10 +216,15 @@ class LastMontLoggedTimeDurationView(GenericAPIView):
 
     def get(self, request: Request) -> Response:
         user_id = request.user.id
-        time_logs = TimeLog.objects.filter(
-            task__user_id=user_id,
-            start_time__month=timezone.now().month,
-            duration__isnull=False)
+
+        time_logs = (
+            TimeLog.objects
+            .filter(
+                task__user_id=user_id,
+                start_time__month=timezone.now().month,
+                duration__isnull=False
+            )
+        )
 
         if not time_logs:
             return Response({'message': 'No time logs found'}, status=HTTP_200_OK)
@@ -218,8 +239,11 @@ class TasksListDurationView(GenericAPIView):
     serializer_class = TaskDurationSerializer
 
     def get(self, request: Request) -> Response:
-        tasks = Task.objects.all().filter(time_logs__duration__isnull=False).annotate(
-            task_duration=Sum('time_logs__duration'))
+        tasks = (
+            Task.objects.all()
+            .filter(time_logs__duration__isnull=False)
+            .annotate(task_duration=Sum('time_logs__duration'))
+        )
 
         return Response(self.get_serializer(tasks, many=True).data, status=HTTP_200_OK)
 
@@ -228,27 +252,26 @@ class TopTasksLastMonthView(GenericAPIView):
     serializer_class = TaskDurationSerializer
 
     def get(self, request: Request) -> Response:
-        top_tasks = (Task.objects
-                     .filter(time_logs__duration__isnull=False,
-                             time_logs__start_time__month=timezone.now().month)
-                     .annotate(task_duration=Sum('time_logs__duration'))
-                     .order_by('-task_duration')[:20])
+        top_tasks = (
+            Task.objects
+            .filter(
+                time_logs__duration__isnull=False,
+                time_logs__start_time__month=timezone.now().month
+            )
+            .annotate(task_duration=Sum('time_logs__duration'))
+            .order_by('-task_duration')[:20]
+        )
 
         return Response(self.get_serializer(top_tasks, many=True).data, status=200)
 
 
 class TaskListDetailsView(ListAPIView):
     serializer_class = TasksSerializer
+    queryset = Task.objects.all()
     filterset_class = TaskFilter
     search_fields = ['title', 'description']
     ordering = ('-id',)
     ordering_fields = ('id', 'title', 'description', 'status', 'created_at')
-
-    def get_serializer_class(self):
-        return self.serializer_class
-
-    def get_queryset(self):
-        return Task.objects.all()
 
 
 class UploadFileView(APIView):
@@ -269,7 +292,7 @@ class UploadFileView(APIView):
         attachment.url = file_url
         attachment.status = AttachmentStatus.UPLOADED
         attachment.save()
-        print("File successfully uploaded")
+        print(f"File {file_key} successfully uploaded")
 
         return Response(status=HTTP_200_OK)
 
@@ -279,7 +302,12 @@ class SearchTasksView(ListAPIView):
 
     def get(self, request: Request, *args, **kwargs):
         s = TaskDocument.search()
-        query = MultiMatch(query=request.query_params.get('search', ''), fields=['title', 'description'])
+
+        query = MultiMatch(
+            query=request.query_params.get('search', ''),
+            fields=['title', 'description']
+        )
+
         s = s.query(query)
         response = s.execute()
 
@@ -293,7 +321,12 @@ class SearchCommentsView(ListAPIView):
 
     def get(self, request: Request, *args, **kwargs):
         s = CommentDocument.search()
-        query = MultiMatch(query=request.query_params.get('search', ''), fields=['content'])
+
+        query = MultiMatch(
+            query=request.query_params.get('search', ''),
+            fields=['content']
+        )
+
         s = s.query(query)
         response = s.execute()
 

@@ -29,7 +29,6 @@ class TimeLogFactory(factory.django.DjangoModelFactory):
         model = TimeLog
 
     task = factory.SubFactory('apps.tasks.factories.TaskFactory')
-
     start_time = factory.Faker(
         'date_time_this_year',
         tzinfo=timezone.get_current_timezone()
@@ -50,7 +49,6 @@ class TaskFactory(factory.django.DjangoModelFactory):
     description = factory.Faker('sentence')
     status = factory.Iterator(StatusEnum)
     user = factory.SubFactory(UserFactory)
-
     created_at = factory.Faker(
         'date_time_this_year',
         tzinfo=timezone.get_current_timezone()
