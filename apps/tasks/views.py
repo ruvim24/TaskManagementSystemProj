@@ -60,7 +60,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
         task.status = StatusEnum.COMPLETED
         task.save()
 
-        task_completed_email.delay(task_id=task.id)
+        result = task_completed_email.delay(task_id=task.id)
 
         return Response({'message': f"Task: f{task.title} completed succesefully"}, status=HTTP_200_OK)
 
@@ -74,7 +74,9 @@ class TaskDetailsView(viewsets.ModelViewSet):
         new_comment = Comment(content=serializer.data['comment'], task=task)
         new_comment.save()
 
-        task_commented_email.delay(comment=new_comment.content, task_id=task.id)
+        result = task_commented_email.delay(comment=new_comment.content, task_id=task.id)
+
+        print(result.get(timeout=10))
 
         return Response({'comment_id': f"{new_comment.id}"}, status=HTTP_201_CREATED)
 
