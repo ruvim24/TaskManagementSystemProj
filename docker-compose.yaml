@@ -90,7 +90,7 @@ services:
   celery-worker:
     build: .
     container_name: celery-worker
-    command: poetry run celery -A DjangoProject.celery worker -l info
+    command: uv run celery -A DjangoProject.celery worker -l info
     environment:
       - C_FORCE_ROOT=true
     depends_on:
@@ -104,7 +104,7 @@ services:
   celery-beat:
     build: .
     container_name: celery-beat
-    command: poetry run celery -A DjangoProject.celery beat -l info
+    command: uv run celery -A DjangoProject.celery beat -l info
     environment:
       - C_FORCE_ROOT=true
     depends_on:

@@ -19,13 +19,13 @@ jobs:
         with:
           python-version: 3.13
 
-      - name: Install Poetry
+      - name: Install uv
         run: |
-          pip install poetry
-          poetry install --no-root
+          pip install uv
+          uv sync --frozen
 
       - name: Run Ruff Lint
-        run: poetry run ruff check .
+        run: uv run ruff check .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
