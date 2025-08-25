@@ -3,6 +3,7 @@ Django settings for DjangoProject project.
 """
 
 from pathlib import Path
+
 import environ
 
 # -----------------------------
@@ -244,3 +245,32 @@ USE_TZ = True
 # DEFAULT PK FIELD
 # -----------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# -----------------------------
+# LOGGING
+# -----------------------------
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'celery': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}

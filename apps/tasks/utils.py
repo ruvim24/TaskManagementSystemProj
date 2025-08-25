@@ -1,12 +1,18 @@
-﻿from celery import shared_task
+﻿import logging
+
+from celery import shared_task
 from django.core.mail import send_mail
 
 from apps.tasks.models import Task
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
 def task_completed_email(task_id):
     task = Task.objects.get(id=task_id)
+
+    logger.info("Processing task_completed_email for task_id: %s", task_id)
 
     task_completed_email_result = {
         'task_id': task_id,
@@ -53,6 +59,7 @@ def task_completed_email(task_id):
 
 @shared_task
 def task_commented_email(task_id, comment):
+    logger.info("Processing task_commented_email for task_id: %s", task_id)
     task = Task.objects.get(id=task_id)
 
     task_commented_email_result = {
@@ -96,6 +103,8 @@ def task_commented_email(task_id, comment):
 
 @shared_task
 def user_assigned_to_task_email(task_id):
+    logger.info("Processing user_assigned_to_task_email for task_id: %s", task_id)
+
     task = Task.objects.get(id=task_id)
 
     user_assigned_to_task_email_result = {

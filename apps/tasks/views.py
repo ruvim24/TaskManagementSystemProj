@@ -15,6 +15,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
 from rest_framework.views import APIView
 
 from DjangoProject.settings import MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+from . import signals
 from .documents import TaskDocument, CommentDocument
 from .filters import TaskFilter
 from .models import Task, StatusEnum, Comment, TimeLog, Attachment, AttachmentStatus
@@ -31,16 +32,12 @@ from .serializers import (
     AttachmentSerializer,
     ElasticSearchSerializer
 )
-from .utils import task_commented_email, user_assigned_to_task_email, task_completed_email
 
 
 # Create your views here.
 class TaskDetailsView(viewsets.ModelViewSet):
     serializer_class = TaskDetailsSerializer
     queryset = Task.objects.all()
-
-    def get_serializer_class(self):
-        return self.serializer_class
 
     @action(detail=True, methods=['put'], serializer_class=AssignUserSerializer, url_path='assign-user')
     def assign_user(self, request, *args, **kwargs):
@@ -50,7 +47,8 @@ class TaskDetailsView(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         task = serializer.save()
-        user_assigned_to_task_email.delay(task_id=task.id)
+
+        signals.task_assigned.send(sender=self.__class__, instance=task)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -60,7 +58,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
         task.status = StatusEnum.COMPLETED
         task.save()
 
-        result = task_completed_email.delay(task_id=task.id)
+        signals.task_completed.send(sender=self.__class__, instance=task)
 
         return Response({'message': f"Task: f{task.title} completed succesefully"}, status=HTTP_200_OK)
 
@@ -74,11 +72,9 @@ class TaskDetailsView(viewsets.ModelViewSet):
         new_comment = Comment(content=serializer.data['comment'], task=task)
         new_comment.save()
 
-        result = task_commented_email.delay(comment=new_comment.content, task_id=task.id)
+        result = signals.task_commented.send(sender=self.__class__, instance=task, comment=new_comment.content)
 
-        print(result.get(timeout=10))
-
-        return Response({'comment_id': f"{new_comment.id}"}, status=HTTP_201_CREATED)
+        return Response({'comment_id': f"{new_comment.id}", 'result': f"{result}"}, status=HTTP_201_CREATED)
 
     @action(detail=True, methods=['get'], serializer_class=CommentSerializer)
     def comments(self, request, pk=None):
