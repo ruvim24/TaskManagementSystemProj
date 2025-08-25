@@ -46,11 +46,12 @@ class TaskDetailsView(viewsets.ModelViewSet):
         serializer = self.get_serializer(task, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        task = serializer.save()
-
+        task.user = serializer.validated_data['user']
+        task.save()
         signals.task_assigned.send(sender=self.__class__, instance=task)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(data=f"User: {task.user.username} assigned to task: {task.title} successfully",
+                        status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['put'], serializer_class=NotImplemented)
     def complete(self, request, *args, **kwargs):
@@ -60,7 +61,7 @@ class TaskDetailsView(viewsets.ModelViewSet):
 
         signals.task_completed.send(sender=self.__class__, instance=task)
 
-        return Response({'message': f"Task: f{task.title} completed succesefully"}, status=HTTP_200_OK)
+        return Response({'message': f"Task: f{task.title} completed successfully"}, status=HTTP_200_OK)
 
     @action(detail=True, methods=['post'], serializer_class=AddCommentToTaskSerializer)
     def comment(self, request: Request, pk: int) -> Response:
