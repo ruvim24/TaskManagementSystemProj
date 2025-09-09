@@ -9,6 +9,7 @@ class TimeLogAdmin(admin.ModelAdmin):
     list_display = (
         "task_id",
         "start_time",
+
         "end_time",
         "duration"
     )

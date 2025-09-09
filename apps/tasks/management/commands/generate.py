@@ -15,7 +15,6 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.SUCCESS('Successfully generated tasks and time logs in db')
             )
-
         except Exception as e:
             self.stdout.write(
                 self.style.ERROR('Some errors occurred at generation tasks and time logs in db.')

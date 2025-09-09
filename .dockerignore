@@ -1,0 +1,54 @@
+﻿# -------------------------------
+# Python
+# -------------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# -------------------------------
+# Django specific
+# -------------------------------
+media/
+staticfiles/
+db.sqlite3
+
+# -------------------------------
+# Logs
+# -------------------------------
+*.log
+logs/
+celerybeat-schedule
+*.pid
+
+# -------------------------------
+# IDEs & OS
+# -------------------------------
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# -------------------------------
+# Git
+# -------------------------------
+.git
+.gitignore
+
+# -------------------------------
+# Caches
+# -------------------------------
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/

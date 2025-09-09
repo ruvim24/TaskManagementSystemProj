@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from apps.tasks.views import profile
 
 urlpatterns = [
     path("", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
@@ -24,5 +25,9 @@ urlpatterns = [
     path("redoc", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path('admin/', admin.site.urls),
     path('api/users/', include('apps.users.urls')),
-    path('api/tasks/', include('apps.tasks.urls')),
+    path('api/', include('apps.tasks.urls')),
+    path('accounts/profile/', profile, name='profile'),
+
+    path('accounts/', include('allauth.urls')),
+
 ]

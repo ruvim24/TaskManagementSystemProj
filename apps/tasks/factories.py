@@ -1,11 +1,10 @@
-﻿from datetime import datetime, timedelta
+﻿from datetime import timedelta
 
 import factory
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from apps.tasks.models import Task, StatusEnum, Comment, TimeLog
-import pytz
-from django.utils import timezone
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -30,7 +29,6 @@ class TimeLogFactory(factory.django.DjangoModelFactory):
         model = TimeLog
 
     task = factory.SubFactory('apps.tasks.factories.TaskFactory')
-
     start_time = factory.Faker(
         'date_time_this_year',
         tzinfo=timezone.get_current_timezone()
@@ -51,7 +49,6 @@ class TaskFactory(factory.django.DjangoModelFactory):
     description = factory.Faker('sentence')
     status = factory.Iterator(StatusEnum)
     user = factory.SubFactory(UserFactory)
-
     created_at = factory.Faker(
         'date_time_this_year',
         tzinfo=timezone.get_current_timezone()
